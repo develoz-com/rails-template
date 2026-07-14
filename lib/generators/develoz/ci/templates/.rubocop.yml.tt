@@ -1,0 +1,22 @@
+inherit_gem:
+  rubocop-rails-omakase: rubocop.yml
+
+AllCops:
+  NewCops: enable
+  TargetRubyVersion: 3.4
+  Exclude:
+    - "bin/*"
+    - "db/schema.rb"
+    - "vendor/bundle/**/*"
+    - "node_modules/**/*"
+
+Layout/LineLength:
+  Max: 120
+  AllowedPatterns:
+    - !ruby/regexp /^ *# /
+
+Style/Documentation:
+  Enabled: false
+
+Style/FrozenStringLiteralComment:
+  Enabled: false

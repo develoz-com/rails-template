@@ -16,6 +16,9 @@ This document maps generator tasks to their canonical source files in external r
 | admin (T16) | develoz-com/inscripto-v2 | `app/admin/...` | `spec/fixtures/canonical/develoz-com-inscripto-v2/...` | `templates/admin/...tt` | app_name, app_class |
 | develoz_ui (T17) | develoz-com/inscripto-v2 | `app/components/develoz_ui/...` | `spec/fixtures/canonical/develoz-com-inscripto-v2/...` | `templates/develoz_ui/...tt` | app_name, app_class |
 | bin/run (T18) | develoz-com/agent | `bin/run` | `spec/fixtures/canonical/develoz-com-agent/bin/run` | `templates/bin/run.tt` | verbatim |
+| ci (T13) | mauriciozaffari/ams2stats | `bin/ci`, `config/ci.rb` | — | `templates/bin/ci.tt`, `templates/config/ci.rb.tt` | adapted, extended linter set |
+| ci (T13) | LooperInsights/looper_core | `.rubocop.yml`, `.reek.yml`, `biome.json`, `.stylelintrc.json`, `.haml-lint.yml`, `.markdownlint.yaml`, `.yamllint` | — | `templates/.rubocop.yml.tt`, `templates/.reek.yml.tt`, `templates/biome.json.tt`, `templates/.stylelintrc.json.tt`, `templates/.haml-lint.yml.tt`, `templates/.markdownlint.json.tt`, `templates/.yamllint.tt` | adapted, simplified for new Rails apps |
+| ci (T13) | — | — | — | `templates/.github/workflows/ci.yml.tt` | authored (simple CI runner) |
 
 ## Pipeline Workflow
 

@@ -1,0 +1,14 @@
+---
+extends: default
+
+ignore: |
+  node_modules/
+  vendor/
+  tmp/
+  public/
+
+rules:
+  line-length: disable
+  document-start: disable
+  truthy:
+    check-keys: false

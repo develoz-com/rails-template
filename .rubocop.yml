@@ -12,6 +12,7 @@ AllCops:
     - "exe/**/*"
     - "vendor/**/*"
     - ".git/**/*"
+    - "config/**/*"
 
 # Gem-specific relaxations
 Metrics/BlockLength:

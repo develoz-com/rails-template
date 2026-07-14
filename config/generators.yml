@@ -1,0 +1,105 @@
+---
+# Always-core generators (included regardless of flags)
+tooling:
+  description: "Tooling setup (linting, formatting, CI)"
+  always: true
+
+testing:
+  description: "Testing framework and helpers"
+  always: true
+
+solid:
+  description: "Solid Stack integration (Stimulus, Turbo, Hotwire)"
+  always: true
+
+ci:
+  description: "CI/CD pipeline configuration"
+  always: true
+
+database:
+  description: "Database configuration and migrations"
+  always: true
+
+concerns:
+  description: "Shared concerns and mixins"
+  always: true
+
+strict_loading:
+  description: "Strict loading configuration"
+  always: true
+
+maintenance:
+  description: "Maintenance tasks and utilities"
+  always: true
+
+frontend_core:
+  description: "Core frontend setup (Tailwind, Importmap, Pagy)"
+  always: true
+
+docs_render:
+  description: "Documentation rendering setup"
+  always: true
+
+doc_specs:
+  description: "Documentation specs"
+  always: true
+
+agents_docs:
+  description: "AGENTS.md documentation"
+  always: true
+
+versioning:
+  description: "App versioning scheme"
+  always: true
+
+# Opt-in generators (included only when flags are true)
+api:
+  description: "REST API setup (Blueprinter, RSWAG)"
+  requires:
+    - api
+
+auth:
+  description: "Authentication setup (Devise, JWT)"
+  requires:
+    - auth
+
+ui:
+  description: "UI component library"
+  requires:
+    - ui
+
+admin:
+  description: "Admin panel setup"
+  requires:
+    - admin
+
+pwa:
+  description: "Progressive Web App setup"
+  requires:
+    - pwa
+
+push:
+  description: "Push notifications setup"
+  requires:
+    - pwa
+    - push
+
+active_resource:
+  description: "ActiveResource integration"
+  requires:
+    - active_resource
+
+docker:
+  description: "Docker and Docker Compose setup"
+  requires:
+    - docker
+
+kamal:
+  description: "Kamal deployment configuration"
+  requires:
+    - kamal
+
+db_backup:
+  description: "Database backup utilities"
+  requires:
+    - db_backup

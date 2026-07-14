@@ -1,0 +1,7 @@
+# frozen_string_literal: true
+
+class ApplicationResource < ActiveResource::Base
+  self.site = ENV.fetch("ACTIVE_RESOURCE_SITE", "")
+  self.headers["Authorization"] = ENV.fetch("ACTIVE_RESOURCE_AUTHORIZATION", "")
+  self.headers["Accept"] = "application/json"
+end

@@ -1,0 +1,5 @@
+# frozen_string_literal: true
+
+class ExampleResource < ApplicationResource
+  # self.element_name = "example"
+end

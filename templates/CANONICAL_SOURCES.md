@@ -42,6 +42,12 @@ This document maps generator tasks to their canonical source files in external r
 | versioning (T36) | develoz-com/inscripto-v2 | `app/helpers/application_helper.rb` (app_version method) | `spec/fixtures/canonical/develoz-com-inscripto-v2/app/helpers/app_version.rb` | `lib/generators/develoz/versioning/templates/app/helpers/application_helper.rb.tt` | verbatim (method snippet) |
 | versioning (T36) | develoz-com/inscripto-v2 | `config/constants.rb` (APP_VERSION line) | — | `lib/generators/develoz/versioning/versioning_generator.rb` (inject_once) | adapted (injected into constants.rb after marker) |
 | versioning (T36) | — | — | — | `lib/generators/develoz/versioning/templates/app/views/shared/_app_version.html.erb.tt` | authored (extracted from inscripto's inline sidebar version display into reusable partial) |
+| api (T22) | LooperInsights/looper_core | `app/controllers/api/v3/base_controller.rb` | — | `lib/generators/develoz/api/templates/app/controllers/api/v1/base_controller.rb.tt` | adapted (v3→v1, removed Cognito/auth_validation, added `def authenticate; end` stub, kept Pagy::Backend + render_json_error + pagination) |
+| api (T22) | LooperInsights/looper_core | `config/initializers/blueprinter.rb` | — | `lib/generators/develoz/api/templates/config/initializers/blueprinter.rb.tt` | adapted (kept LowerCamelTransformer + default_transformers + datetime_format, removed BlueprinterActiveRecord::Preloader and unless lambda) |
+| api (T22) | LooperInsights/looper_core | `app/serializers/client_blueprint.rb` (pattern) | — | `lib/generators/develoz/api/templates/app/blueprints/example_blueprint.rb.tt` | authored (minimal blueprint demonstrating identifier + fields, inherits Blueprinter::Base directly since no BaseBlueprint in generated app) |
+| api (T22) | LooperInsights/looper_core | `config/initializers/rswag_api.rb` | — | `lib/generators/develoz/api/templates/config/initializers/rswag_api.rb.tt` | adapted (added frozen_string_literal, otherwise verbatim) |
+| api (T22) | LooperInsights/looper_core | `config/initializers/rswag_ui.rb` | — | `lib/generators/develoz/api/templates/config/initializers/rswag_ui.rb.tt` | adapted (endpoint label changed from 'Looper Core API V3' to 'API V1', path v3→v1, added frozen_string_literal) |
+| api (T22) | LooperInsights/looper_core | `spec/requests/api/v3/clients_spec.rb` (pattern) | — | `lib/generators/develoz/api/templates/spec/requests/api/v1/examples_spec.rb.tt` | authored (minimal rswag spec demonstrating path/response DSL, no auth dependencies) |
 
 ## Pipeline Workflow
 

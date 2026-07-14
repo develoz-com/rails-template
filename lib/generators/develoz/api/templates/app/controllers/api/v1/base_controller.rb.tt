@@ -1,0 +1,96 @@
+# frozen_string_literal: true
+
+module Api
+  module V1
+    class BaseController < ApplicationController
+      include Pagy::Backend
+
+      skip_forgery_protection
+      before_action :authenticate
+
+      rescue_from ActiveRecord::RecordNotFound do |e|
+        render_json_error(:not_found, e.message)
+      end
+
+      rescue_from ActiveRecord::RecordInvalid do |e|
+        render_json_error(:unprocessable_content, e.message)
+      end
+
+      def self.default_page_size(size = nil)
+        @default_page_size = size if size
+        @default_page_size || 20
+      end
+
+      delegate :default_page_size, to: :class
+
+      private
+
+      # Override in subclasses to implement authentication
+      # (e.g. Cognito, Devise, API token). The default stub allows
+      # all requests through so the API is usable out of the box.
+      def authenticate; end
+
+      def render_json_error(status, message, extra = {})
+        status = Rack::Utils::SYMBOL_TO_STATUS_CODE[status] if status.is_a?(Symbol)
+
+        error = { detail: message, status: }.merge(extra)
+
+        render json: { error: }, status:
+      end
+
+      def render_resource(resource, options = {})
+        if (pagination_options = Array(options[:paginate])).present?
+          resource = resource.limit(limit) if pagination_options.include?(:force_limit) && common_params[:page].blank?
+          pager = :arel if pagination_options.include?(:arel) || common_params[:countless] == "false"
+          pager ||= :countless
+          resource = paginated(resource, force: pagination_options.include?(:force), pager:)
+        end
+
+        options = { meta:, view: }.merge(options).compact
+
+        render json: render_json(resource, options)
+      end
+      alias render_resources render_resource
+
+      def render_json(resource, options = {})
+        return resource.serialize_as_json(options) if resource.respond_to?(:serialize_as_json)
+
+        return options[:blueprint].render(resource, options) if options[:blueprint].present?
+
+        Rails.logger.warn "Couldn't find blueprint for #{resource}, falling back to ruby JSON serializer."
+        resource.to_json
+      end
+
+      def view
+        common_params[:view]&.to_sym
+      end
+
+      def paginated(resources, force: false, pager: :arel)
+        return resources unless common_params[:page].present? || force
+
+        @pagy, resources = send(["pagy", pager].join("_"), resources, limit:, countless_minimal: true)
+        resources
+      end
+
+      def limit
+        common_params[:limit].presence || default_page_size
+      end
+
+      def meta
+        meta = common_params.to_h.compact
+
+        if @pagy
+          meta[:recordCount] = @pagy.count
+          meta[:pageCount] = @pagy.pages
+          meta[:countless] = @pagy.is_a?(Pagy::Countless)
+        end
+
+        meta
+      end
+
+      def common_params
+        params.permit(:filter, :page, :limit, :sort, :view, :countless)
+      end
+    end
+  end
+end

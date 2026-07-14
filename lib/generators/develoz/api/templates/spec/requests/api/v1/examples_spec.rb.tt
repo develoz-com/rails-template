@@ -1,0 +1,25 @@
+# frozen_string_literal: true
+
+require 'swagger_helper'
+
+RSpec.describe 'Examples', type: :request do
+  path '/api/v1/examples' do
+    get 'Lists examples' do
+      tags 'Examples'
+      produces 'application/json'
+      description 'Returns a paginated list of examples'
+
+      response '200', 'successfully' do
+        schema type: :object,
+               properties: {
+                 examples: { type: :array, items: { type: :object } },
+                 meta: { type: :object }
+               }
+
+        run_test! do
+          expect(response).to have_http_status(:ok)
+        end
+      end
+    end
+  end
+end

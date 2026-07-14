@@ -1,0 +1,37 @@
+# frozen_string_literal: true
+
+require "rails_helper"
+
+RSpec.describe "Sessions", type: :request do
+  describe "GET /session/new" do
+    it "renders the sign in form" do
+      get new_session_path
+      expect(response).to have_http_status(:ok)
+    end
+  end
+
+  describe "POST /session" do
+    it "signs in a valid user" do
+      user = User.create!(email: "test@example.com", password: "password123")
+
+      post session_path, params: { email: user.email, password: "password123" }
+      expect(response).to redirect_to(root_url)
+    end
+
+    it "redirects with alert for invalid credentials" do
+      post session_path, params: { email: "wrong@example.com", password: "wrong" }
+      expect(response).to redirect_to(new_session_path)
+      expect(flash[:alert]).to be_present
+    end
+  end
+
+  describe "DELETE /session" do
+    it "signs out the current user" do
+      user = User.create!(email: "test@example.com", password: "password123")
+      post session_path, params: { email: user.email, password: "password123" }
+
+      delete session_path
+      expect(response).to redirect_to(new_session_path)
+    end
+  end
+end

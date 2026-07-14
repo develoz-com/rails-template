@@ -22,6 +22,10 @@ This document maps generator tasks to their canonical source files in external r
 | concerns (T15) | LooperInsights/looper_core | `app/models/concerns/searchable_concern.rb`, `app/models/concerns/optimized_finders.rb`, `app/models/concerns/transitionable.rb`, `app/models/concerns/configurable.rb` | `spec/fixtures/canonical/LooperInsights-looper_core/app/models/concerns/...` | `templates/app/models/concerns/...tt` | verbatim |
 | concerns (T15) | LooperInsights/looper_core | `db/migrate/20260506120000_add_status_columns_to_merchandizing_pages.rb`, `db/migrate/20250524195130_create_configurations.rb` | — | `templates/db/migrate/add_status_transitions.rb.tt`, `templates/db/migrate/create_configurations.rb.tt` | adapted (generic table names) |
 | concerns (T15) | — | — | — | `templates/spec/models/concerns/...tt` | authored (modeled on looper_core specs) |
+| docs_render (T19) | LooperInsights/looper_core | `app/models/document.rb`, `app/javascript/docs.js`, `app/assets/stylesheets/documentation.scss` | `spec/fixtures/canonical/LooperInsights-looper_core/app/models/document.rb`, `.../app/javascript/docs.js`, `.../app/assets/stylesheets/documentation.scss` | `templates/app/models/document.rb.tt`, `templates/app/javascript/docs.js.tt`, `templates/app/assets/stylesheets/documentation.scss.tt` | verbatim |
+| docs_render (T19) | LooperInsights/looper_core | `app/controllers/docs_controller.rb` | — | `templates/app/controllers/docs_controller.rb.tt` | adapted (AdminController -> ApplicationController) |
+| docs_render (T19) | LooperInsights/looper_core | `app/views/docs/show.html.haml` | — | `templates/app/views/docs/show.html.erb.tt` | adapted (HAML -> ERB, inner ERB escaped with `<%%= %>`) |
+| docs_render (T19) | — | — | — | `templates/config/initializers/redcarpet_rouge.rb.tt` | authored (looper_core has no separate initializer; Document model handles config inline) |
 
 ## Pipeline Workflow
 

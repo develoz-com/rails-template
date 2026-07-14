@@ -1,0 +1,145 @@
+section.documentation {
+  table {
+    margin-bottom: 20px;
+
+    th,
+    td {
+      border: 1px solid #dee2e6;
+      padding: 5px;
+    }
+  }
+
+  .box-body {
+    padding: 10px 30px;
+    max-width: 1200px;
+
+    h1,
+    h2,
+    h3,
+    h4 {
+      margin-top: 40px;
+    }
+
+    pre.code-block {
+      margin-bottom: 20px;
+      padding: 16px 20px;
+      overflow-x: auto;
+      font-size: 0.875rem;
+      line-height: 1.5;
+      color: #c9d1d9;
+      background-color: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+
+      code {
+        padding: 0;
+        color: inherit;
+        white-space: pre;
+        background-color: transparent;
+        border: 0;
+      }
+    }
+
+    :not(pre) > code {
+      padding: 0.2em 0.4em;
+      font-size: 0.875em;
+      color: #24292f;
+      background-color: rgb(175 184 193 / 20%);
+      border-radius: 6px;
+
+      .dark & {
+        color: #c9d1d9;
+      }
+    }
+
+    pre.mermaid {
+      margin-bottom: 20px;
+      padding: 0;
+      text-align: center;
+      background: transparent;
+      border: 0;
+
+      &:not([data-processed="true"]) {
+        visibility: hidden;
+      }
+    }
+
+    blockquote {
+      margin: 20px 0;
+      padding: 12px 16px;
+      color: #495057;
+      background: #f8f9fa;
+      border-left: 4px solid #0d6efd;
+      border-radius: 0 6px 6px 0;
+
+      p:last-child {
+        margin-bottom: 0;
+      }
+
+      &.callout {
+        --callout-accent: #57606a;
+        --callout-background: #f6f8fa;
+        --callout-foreground: #24292f;
+
+        color: var(--callout-foreground);
+        background: var(--callout-background);
+        border-left-color: var(--callout-accent);
+
+        .dark & {
+          --callout-background: #161b22;
+          --callout-foreground: #c9d1d9;
+        }
+      }
+
+      &.callout-note {
+        --callout-accent: #0969da;
+
+        .dark & {
+          --callout-accent: #58a6ff;
+        }
+      }
+
+      &.callout-tip {
+        --callout-accent: #1a7f37;
+
+        .dark & {
+          --callout-accent: #3fb950;
+        }
+      }
+
+      &.callout-important {
+        --callout-accent: #8250df;
+
+        .dark & {
+          --callout-accent: #a371f7;
+        }
+      }
+
+      &.callout-warning {
+        --callout-accent: #9a6700;
+
+        .dark & {
+          --callout-accent: #d29922;
+        }
+      }
+
+      &.callout-caution {
+        --callout-accent: #cf222e;
+
+        .dark & {
+          --callout-accent: #f85149;
+        }
+      }
+
+      .callout-title {
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: var(--callout-accent);
+
+        .fa {
+          margin-right: 6px;
+        }
+      }
+    }
+  }
+}

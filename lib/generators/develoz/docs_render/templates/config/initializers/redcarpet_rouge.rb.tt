@@ -1,0 +1,16 @@
+# frozen_string_literal: true
+
+# Redcarpet and Rouge configuration for documentation rendering.
+#
+# The Document model (app/models/document.rb) creates its own
+# Redcarpet::Markdown instance with the required extensions
+# (fenced_code_blocks, tables, autolink, strikethrough) and uses
+# Rouge::Formatters::HTMLInline with the Github dark theme for syntax
+# highlighting of fenced code blocks.
+#
+# Mermaid diagrams are rendered client-side by app/javascript/docs.js,
+# which imports the mermaid package and processes <pre class="mermaid">
+# elements after each Turbo navigation.
+#
+# To use Mermaid, pin it in config/importmap.rb:
+#   pin "mermaid", to: "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs"

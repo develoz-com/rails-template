@@ -1,0 +1,7 @@
+<%% content_for :head do %>
+  <%%= javascript_include_tag 'docs', 'data-turbo-track': 'reload' %>
+<%% end %>
+
+<section class="content documentation">
+  <%%= @document.render %>
+</section>

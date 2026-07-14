@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+set -e
+
+# Setup script for the develoz-ui submodule.
+# Initializes the develoz-ui git submodule at vendor/develoz-ui.
+#
+# If the submodule is not initialized, the develoz_ui gem will fail to load
+# in development/test environments where it uses `path: "vendor/develoz-ui"`.
+# In production, the gem is fetched from GitHub directly.
+
+echo "Initializing develoz-ui submodule..."
+git submodule update --init --recursive vendor/develoz-ui
+
+if [ ! -d "vendor/develoz-ui" ] || [ -z "$(ls -A vendor/develoz-ui 2>/dev/null)" ]; then
+  echo "ERROR: develoz-ui submodule is not initialized."
+  echo "Run 'bin/setup_develoz_ui' to initialize it."
+  exit 1
+fi
+
+echo "develoz-ui submodule is ready."

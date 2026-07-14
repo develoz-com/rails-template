@@ -1,0 +1,14 @@
+# frozen_string_literal: true
+
+class PushSubscription < ApplicationRecord
+  belongs_to :user, optional: true
+
+  validates :endpoint, presence: true, uniqueness: true
+  validates :p256dh, presence: true
+  validates :auth, presence: true
+
+  # Purge subscriptions whose endpoint is no longer valid (410 Gone).
+  def self.purge_invalid!(response)
+    where(endpoint: response&.request&.uri&.to_s).destroy_all if response&.code == 410
+  end
+end

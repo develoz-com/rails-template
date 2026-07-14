@@ -1,0 +1,5 @@
+# VAPID keys for web push notifications
+# Generate with: ruby -e "require 'web-push'; k = WebPush.generate_key; puts \"VAPID_PUBLIC_KEY=#{k.public_key}\"; puts \"VAPID_PRIVATE_KEY=#{k.private_key}\""
+VAPID_PUBLIC_KEY=
+VAPID_PRIVATE_KEY=
+VAPID_SUBJECT=mailto:noreply@example.com

@@ -1,0 +1,36 @@
+# frozen_string_literal: true
+
+require "web-push"
+
+class PushNotificationService
+  VAPID_SUBJECT_DEFAULT = "mailto:noreply@example.com".freeze
+  private_constant :VAPID_SUBJECT_DEFAULT
+
+  def self.send_notification(subscription, title:, body:, url: nil, icon: nil)
+    payload = { title: title, body: body }
+    payload[:url] = url if url
+    payload[:icon] = icon if icon
+
+    WebPush.payload_send(
+      message: payload.to_json,
+      endpoint: subscription.endpoint,
+      p256dh: subscription.p256dh,
+      auth: subscription.auth,
+      vapid: vapid_options,
+      ttl: 24 * 60 * 60
+    )
+  rescue WebPush::ExpiredSubscription, WebPush::InvalidSubscription
+    subscription.destroy
+  rescue WebPush::Error => e
+    Rails.logger.warn("Push notification failed: #{e.message}")
+  end
+
+  def self.vapid_options
+    {
+      subject: ENV.fetch("VAPID_SUBJECT", VAPID_SUBJECT_DEFAULT),
+      public_key: ENV.fetch("VAPID_PUBLIC_KEY"),
+      private_key: ENV.fetch("VAPID_PRIVATE_KEY")
+    }
+  end
+  private_class_method :vapid_options
+end

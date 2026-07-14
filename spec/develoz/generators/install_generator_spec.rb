@@ -53,7 +53,7 @@ RSpec.describe Develoz::Generators::InstallGenerator do
   it "warns when a generator is not yet available" do
     with_tmp_dir do |tmp|
       gen = described_class.new([], {}, destination_root: tmp)
-      expect { gen.send(:invoke_generator, "pwa") }.to output(/not yet available/).to_stdout
+      expect { gen.send(:invoke_generator, "nonexistent") }.to output(/not yet available/).to_stdout
     end
   end
 end

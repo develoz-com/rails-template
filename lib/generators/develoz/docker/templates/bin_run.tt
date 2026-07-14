@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# bin/run: Docker-aware command runner
+#
+# If the Docker Compose app service is running, exec the command inside the
+# container. Otherwise, run the command locally with asdf/rbenv-aware Ruby.
+
+run_in_docker() {
+  docker compose ps app --format '{{.State}}' 2>/dev/null | grep -qi 'running'
+}
+
+run_local() {
+  if command -v asdf >/dev/null 2>&1; then
+    exec asdf exec "$@"
+  elif command -v rbenv >/dev/null 2>&1; then
+    exec rbenv exec "$@"
+  else
+    exec "$@"
+  fi
+}
+
+if run_in_docker; then
+  exec docker compose exec app "$@"
+else
+  run_local "$@"
+fi

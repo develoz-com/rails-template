@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "==> Setting up development environment..."
+
+# Install gems
+bundle install
+
+# Create and migrate the database
+if [ -f config/database.yml ]; then
+  bin/rails db:create db:migrate
+fi
+
+echo "==> Setup complete!"
+echo "Run bin/dev to start the development server."

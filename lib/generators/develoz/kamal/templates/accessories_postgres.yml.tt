@@ -1,0 +1,14 @@
+# Postgres accessory for Kamal deployment of <%= kamal_app_name %>.
+# This file defines the postgres database accessory. It is referenced from
+# config/deploy.yml under the `accessories` key. See
+# https://kamal-deploy.org/docs/configuration/accessories/ for full docs.
+
+postgres:
+  image: postgres:18
+  host: <%= kamal_app_name %>-db.example.com
+  port: "127.0.0.1:5432:5432"
+  env:
+    secret:
+      - POSTGRES_PASSWORD
+  directories:
+    - postgres-data:/var/lib/postgresql/data

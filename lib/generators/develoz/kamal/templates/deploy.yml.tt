@@ -1,0 +1,43 @@
+# Kamal 2 deployment configuration for <%= kamal_app_name %>.
+# See https://kamal-deploy.org for documentation.
+# Override defaults via ENV vars: KAMAL_APP_NAME, KAMAL_IMAGE, KAMAL_REGISTRY, KAMAL_SERVERS.
+
+service: <%= kamal_app_name %>
+image: <%= kamal_image %>
+
+servers:
+<% if kamal_servers.empty? %>
+  - <%= kamal_app_name %>.example.com
+<% else %>
+<% kamal_servers.split(",").each do |server| %>
+  - <%= server.strip %>
+<% end %>
+<% end %>
+
+registry:
+  username: <%= kamal_registry.empty? ? "your-registry-user" : kamal_registry %>
+  password:
+    - KAMAL_REGISTRY_PASSWORD
+
+builder:
+  arch: amd64
+
+env:
+  secret:
+    - RAILS_MASTER_KEY
+    - DATABASE_URL
+<% if push_enabled? %>
+    - VAPID_PUBLIC_KEY
+    - VAPID_PRIVATE_KEY
+<% end %>
+
+accessories:
+  postgres:
+    image: postgres:18
+    host: <%= kamal_app_name %>-db.example.com
+    port: "127.0.0.1:5432:5432"
+    env:
+      secret:
+        - POSTGRES_PASSWORD
+    directories:
+      - postgres-data:/var/lib/postgresql/data

@@ -1,0 +1,16 @@
+default: &default
+  store_options:
+    # Cap age of oldest cache entry to fulfill retention policies
+    # max_age: 5184000
+    max_size: 268435456
+    namespace: <%= ENV.fetch("RAILS_ENV", "development") %>
+
+development:
+  <<: *default
+
+test:
+  <<: *default
+
+production:
+  database: cache
+  <<: *default

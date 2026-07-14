@@ -13,6 +13,7 @@ AllCops:
     - "vendor/**/*"
     - ".git/**/*"
     - "config/**/*"
+    - "spec/fixtures/canonical/**/*"
 
 # Gem-specific relaxations
 Metrics/BlockLength:

@@ -1,0 +1,20 @@
+# frozen_string_literal: true
+
+module Maintenance
+  # Example maintenance task that touches all records in batches.
+  # Demonstrates the standard MaintenanceTasks::Task structure: collection,
+  # count, and process. Replace with your own task logic as needed.
+  class ExampleTask < MaintenanceTasks::Task
+    def collection
+      User.in_batches(of: 1000)
+    end
+
+    def count
+      User.count
+    end
+
+    def process(batch)
+      batch.update_all(updated_at: Time.current)
+    end
+  end
+end

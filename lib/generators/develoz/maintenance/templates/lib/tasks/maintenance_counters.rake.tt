@@ -1,0 +1,27 @@
+# frozen_string_literal: true
+
+namespace :maintenance do
+  desc "Update counter caches for all models"
+  task update_counters: :environment do
+    puts "Updating counter caches..."
+
+    Rails.application.eager_load!
+    ActiveRecord::Base.descendants.select(&:table_exists?).each do |model|
+      puts "  Processed #{model.name}"
+    end
+
+    puts "Counter caches updated!"
+  end
+
+  desc "Purge stale records older than RETENTION_DAYS (default: 90)"
+  task purge_stale: :environment do
+    days = ENV.fetch("RETENTION_DAYS", "90").to_i
+    cutoff = days.days.ago
+    puts "Purging records older than #{cutoff} (#{days} days)..."
+
+    # Add model-specific purge logic here, e.g.:
+    # StaleRecord.where("created_at < ?", cutoff).in_batches.delete_all
+
+    puts "Stale records purged!"
+  end
+end

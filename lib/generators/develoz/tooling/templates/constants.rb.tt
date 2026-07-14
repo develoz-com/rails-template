@@ -1,0 +1,11 @@
+# frozen_string_literal: true
+
+module Constants
+  def self.fetch_required(key)
+    ENV.fetch(key) { raise "Missing required environment variable: #{key}" }
+  end
+
+  APP_NAME = ENV.fetch("APP_NAME", "<%= app_name %>")
+
+  # additional constants appended by generators
+end

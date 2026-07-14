@@ -1,0 +1,26 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "rspec",
+      "type": "shell",
+      "command": "bundle",
+      "args": ["exec", "rspec"],
+      "problemMatcher": [],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "rubocop",
+      "type": "shell",
+      "command": "bundle",
+      "args": ["exec", "rubocop"],
+      "problemMatcher": [],
+      "group": {
+        "kind": "build"
+      }
+    }
+  ]
+}

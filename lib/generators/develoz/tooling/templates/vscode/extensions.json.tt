@@ -1,0 +1,8 @@
+{
+  "recommendations": [
+    "Shopify.ruby-lsp",
+    "EditorConfig.EditorConfig",
+    "GitHub.copilot",
+    "ms-vscode.makefile-tools"
+  ]
+}

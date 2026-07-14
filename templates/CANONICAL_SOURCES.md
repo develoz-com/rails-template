@@ -39,6 +39,9 @@ This document maps generator tasks to their canonical source files in external r
 | agents_docs (T21) | — | — | — | `lib/generators/develoz/agents_docs/templates/spec/support/faraday.rb.tt` | authored (Faraday factory with retry middleware) |
 | agents_docs (T21) | — | — | — | `lib/generators/develoz/agents_docs/templates/spec/requests/example_api_spec.rb.tt` | authored (demonstrates VCR + Faraday pattern) |
 | agents_docs (T21) | — | — | — | `lib/generators/develoz/agents_docs/templates/spec/cassettes/Example_API/fetches_data_from_an_external_API.yml.tt` | authored (stub VCR cassette fixture) |
+| versioning (T36) | develoz-com/inscripto-v2 | `app/helpers/application_helper.rb` (app_version method) | `spec/fixtures/canonical/develoz-com-inscripto-v2/app/helpers/app_version.rb` | `lib/generators/develoz/versioning/templates/app/helpers/application_helper.rb.tt` | verbatim (method snippet) |
+| versioning (T36) | develoz-com/inscripto-v2 | `config/constants.rb` (APP_VERSION line) | — | `lib/generators/develoz/versioning/versioning_generator.rb` (inject_once) | adapted (injected into constants.rb after marker) |
+| versioning (T36) | — | — | — | `lib/generators/develoz/versioning/templates/app/views/shared/_app_version.html.erb.tt` | authored (extracted from inscripto's inline sidebar version display into reusable partial) |
 
 ## Pipeline Workflow
 

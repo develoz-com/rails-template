@@ -1,0 +1,15 @@
+# frozen_string_literal: true
+
+# Strict loading configuration
+# Enables strict loading by default with n_plus_one_only mode.
+# Violations raise in test, log in development and production.
+Rails.application.config.active_record.strict_loading_by_default = true
+Rails.application.config.active_record.strict_loading_mode = :n_plus_one_only
+
+Rails.application.configure do
+  config.active_record.strict_loading_violation =
+    case Rails.env
+    when "test" then :raise
+    else :log
+    end
+end

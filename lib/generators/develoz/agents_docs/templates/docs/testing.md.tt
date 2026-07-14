@@ -1,0 +1,92 @@
+# Testing Guide
+
+This guide documents how to run and write tests.
+
+## Test Stack
+
+- RSpec
+- Capybara (system specs)
+- FactoryBot and Faker
+- SimpleCov (line and branch thresholds)
+- WebMock and VCR (`spec/cassettes/`)
+
+## Run Tests
+
+```bash
+bundle exec rake spec:parallel       # full suite in parallel (fastest)
+bundle exec rspec                    # full suite single process
+
+bundle exec rspec spec/system/
+bundle exec rspec spec/requests/
+bundle exec rspec spec/models/
+bundle exec rspec spec/services/
+
+bundle exec rspec spec/system/tickets_spec.rb
+bundle exec rspec spec/system/tickets_spec.rb:25
+
+bundle exec rspec --only-failures
+bundle exec rspec --next-failure
+bundle exec rspec --format documentation
+bundle exec rspec --profile 10
+```
+
+## Coverage Requirement (Mandatory)
+
+100% line and 100% branch coverage is required. This is enforced by SimpleCov in `spec/spec_helper.rb`.
+
+```bash
+bundle exec rspec
+```
+
+Then review `coverage/index.html` for any uncovered lines or branches.
+
+```bash
+xdg-open coverage/index.html  # Linux
+open coverage/index.html      # macOS
+```
+
+## What to Test
+
+- `spec/system/` for user-facing workflows
+- `spec/requests/` for endpoint behavior
+- `spec/models/` for model behavior and validations
+- `spec/services/` and `spec/lib/` for workflow/domain logic
+
+Prefer request and system specs over controller specs.
+
+## Testing Conventions
+
+- Test behavior, not internal implementation.
+- Use descriptive example names.
+- Use FactoryBot (`create`, `build`) for test data.
+- Use `aggregate_failures` for grouped UI assertions when useful.
+- Stub external systems only when necessary.
+- Stub real git commands and filesystem side effects in tests. Do not create real git repos, shell out to git, or write temporary fixture files just to exercise parsing or state handling when a stubbed command/service response covers the behavior.
+- If a test truly needs filesystem or git integration, keep it explicit about why the integration boundary matters.
+
+## External API Tests
+
+- Use `:vcr` for external calls.
+- Keep cassettes in `spec/cassettes/`.
+- Avoid storing secrets in cassette data.
+- Refresh stale cassettes when upstream API behavior changes.
+
+## Validation Before PR
+
+```bash
+bundle exec rspec
+bundle exec rubocop
+bundle exec brakeman
+```
+
+## Troubleshooting
+
+- Migration mismatch: `bin/rails db:migrate`.
+- Coverage below threshold: inspect `coverage/index.html` and add missing specs.
+- JS/system issues: verify Selenium is up with `docker compose ps`.
+- VCR mismatch: refresh cassette and rerun the failing spec.
+
+## Related Docs
+
+- [docs/development.md](development.md)
+- [docs/performance.md](performance.md)

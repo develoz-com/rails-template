@@ -30,6 +30,15 @@ This document maps generator tasks to their canonical source files in external r
 | doc_specs (T20) | LooperInsights/looper_core | `spec/rails_helper.rb` (inline module) | — | `templates/spec/support/doc_screenshot_helper.rb.tt` | authored (extracted from rails_helper.rb inline module into standalone support file) |
 | doc_specs (T20) | LooperInsights/looper_core | `Rakefile` (inline task) | — | `templates/lib/tasks/docs_check.rake.tt` | adapted (extracted docs:check namespace from Rakefile into standalone rake file) |
 | doc_specs (T20) | — | — | — | `templates/spec/system/example_doc_spec.rb.tt` | authored (demonstrates @category, @order, doc_screenshot pattern) |
+| agents_docs (T21) | develoz-com/agent | `AGENTS.md` | — | `lib/generators/develoz/agents_docs/templates/AGENTS.md.tt` | adapted (generic for any develoz app; removed bin/run, develoz_agent CLI, agent-specific docs) |
+| agents_docs (T21) | develoz-com/agent | `docs/development.md` | — | `lib/generators/develoz/agents_docs/templates/docs/development.md.tt` | adapted (removed bin/run, develoz_agent CLI, agent-specific sections) |
+| agents_docs (T21) | develoz-com/agent | `docs/testing.md` | — | `lib/generators/develoz/agents_docs/templates/docs/testing.md.tt` | adapted (removed bin/run, agent-specific external tool stubs) |
+| agents_docs (T21) | develoz-com/agent | `docs/performance.md` | — | `lib/generators/develoz/agents_docs/templates/docs/performance.md.tt` | adapted (removed agent-specific query paths, indexes, Jira caching) |
+| agents_docs (T21) | develoz-com/inscripto-v2 | `.github/pull_request_template.md` | `spec/fixtures/canonical/develoz-com-inscripto-v2/.github/pull_request_template.md` | `lib/generators/develoz/agents_docs/templates/.github/pull_request_template.md.tt` | verbatim |
+| agents_docs (T21) | — | — | — | `lib/generators/develoz/agents_docs/templates/spec/support/vcr.rb.tt` | authored (VCR config with WebMock) |
+| agents_docs (T21) | — | — | — | `lib/generators/develoz/agents_docs/templates/spec/support/faraday.rb.tt` | authored (Faraday factory with retry middleware) |
+| agents_docs (T21) | — | — | — | `lib/generators/develoz/agents_docs/templates/spec/requests/example_api_spec.rb.tt` | authored (demonstrates VCR + Faraday pattern) |
+| agents_docs (T21) | — | — | — | `lib/generators/develoz/agents_docs/templates/spec/cassettes/Example_API/fetches_data_from_an_external_API.yml.tt` | authored (stub VCR cassette fixture) |
 
 ## Pipeline Workflow
 

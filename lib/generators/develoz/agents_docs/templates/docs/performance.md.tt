@@ -1,0 +1,46 @@
+# Performance Guide
+
+This document summarizes current query-performance practices and optimizations.
+
+## N+1 Detection in Development
+
+- `config/environments/development.rb` enables strict-loading N+1 checks.
+- `verbose_query_logs = true` helps trace query origin quickly.
+- Goal: fail in development when lazy-loading patterns introduce N+1 behavior.
+
+## Query Patterns to Prefer
+
+- Use `includes` when iterating associated records.
+- Use DB predicates (`where`) instead of Ruby filtering.
+- Use `pluck` when only IDs or specific columns are needed.
+- Use `find_each` for large batch processing.
+- Use `select` to limit columns on read-heavy paths.
+
+## Index Strategy
+
+- Add indexes for columns used in `where`, `order`, and `join` clauses.
+- Use partial indexes for boolean conditions that filter most rows.
+- Use composite indexes for multi-column query patterns.
+- Review `pg_stat_user_indexes` to identify unused indexes.
+
+## Verification Queries
+
+```sql
+SELECT schemaname, relname, indexrelname, idx_scan, idx_tup_read
+FROM pg_stat_user_indexes
+ORDER BY idx_scan DESC;
+
+EXPLAIN ANALYZE SELECT * FROM records WHERE status = 'active';
+```
+
+## Caching
+
+- Use `Rails.cache` for expensive computations and external API metadata.
+- Scope cache keys per resource to prevent cross-project data leaks.
+- Set TTLs short enough to avoid stale data and long enough to keep UI fast.
+- Invalidate caches when underlying data changes.
+
+## Related Docs
+
+- [docs/development.md](development.md)
+- [docs/testing.md](testing.md)

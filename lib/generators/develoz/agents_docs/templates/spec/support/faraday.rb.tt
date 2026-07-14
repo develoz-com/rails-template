@@ -1,0 +1,19 @@
+# frozen_string_literal: true
+
+require "faraday"
+require "faraday-retry"
+
+module FaradayFactory
+  def self.build(url: nil)
+    Faraday.new(url: url) do |conn|
+      conn.request :retry, {
+        max: 3,
+        interval: 0.5,
+        backoff_factor: 2
+      }
+      conn.request :json
+      conn.response :json
+      conn.adapter Faraday.default_adapter
+    end
+  end
+end

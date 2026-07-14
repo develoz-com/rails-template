@@ -1,0 +1,121 @@
+# Development Guide
+
+This guide covers day-to-day local development.
+
+## Core Rules
+
+- Use Docker-first workflows (`docker compose`).
+- Run project commands through `bin/rails` or `bundle exec`.
+
+## Boot Local Environment
+
+```bash
+cp .env.example .env
+docker compose up --build -d app
+bin/rails db:migrate
+bin/rails db:seed
+```
+
+Useful lifecycle commands:
+
+```bash
+docker compose logs -f app
+docker compose down
+```
+
+## Command Reference
+
+### Tests
+
+```bash
+bundle exec rspec
+bundle exec rspec spec/system/
+bundle exec rspec spec/requests/
+bundle exec rspec spec/models/
+bundle exec rspec spec/system/tickets_spec.rb:25
+bundle exec rspec --only-failures
+bundle exec rspec --next-failure
+```
+
+### Lint and Security
+
+```bash
+bundle exec rubocop
+bundle exec rubocop -A
+bundle exec brakeman
+```
+
+### Rails and DB
+
+```bash
+bin/rails db:migrate
+bin/rails db:seed
+bin/rails console
+bin/rails console --sandbox
+bin/rails runner --help
+RAILS_ENV=test bin/rails console
+```
+
+### Runner Scripts and One-Offs
+
+- Prefer checked-in scripts under `tmp/` for one-off investigation, data fixes, and runner tasks.
+- If you need Rails loaded, either require the environment from a Ruby script or pass a script file to Rails runner.
+
+Recommended patterns:
+
+```bash
+# Plain Ruby with the Rails environment loaded manually
+ruby tmp/my_script.rb
+
+# Rails runner with a script file
+bin/rails runner tmp/my_runner.rb
+
+# Discover runner usage and available flags
+bin/rails runner --help
+bin/rails --help
+```
+
+Example `tmp/my_script.rb`:
+
+```ruby
+require './config/environment'
+
+record = Record.find_by(name: 'example')
+pp(record&.attributes&.slice('name', 'status'))
+```
+
+Use inline runner snippets only when the command is trivial and shell quoting is not a risk.
+
+### Frontend Assets
+
+```bash
+bin/rails tailwindcss:build
+bin/rails tailwindcss:watch
+```
+
+## Recommended Change Workflow
+
+1. Add or update tests first.
+2. Implement in small, reviewable steps.
+3. Run targeted tests while iterating.
+4. Run full checks before finishing:
+
+```bash
+bundle exec rspec
+bundle exec rubocop
+bundle exec brakeman
+```
+
+5. Update the matching document in this folder when behavior changes.
+
+## Troubleshooting
+
+- Docker unavailable: start Docker and rerun commands.
+- Migration issues: run `bin/rails db:migrate:status`.
+- App startup issues: check `docker compose logs -f app postgres redis`.
+- Stale test schema/data: rerun `bin/rails db:migrate` and `bundle exec rspec`.
+
+## Related Docs
+
+- [docs/testing.md](testing.md)
+- [docs/performance.md](performance.md)

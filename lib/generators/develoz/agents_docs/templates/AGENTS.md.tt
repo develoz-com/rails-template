@@ -1,0 +1,36 @@
+# AGENTS.md
+
+This file gives high-level guidance for coding agents working in this repository.
+
+## Development Environment
+
+- Development is Docker-first and uses `docker compose`.
+- Run project commands through `bin/rails` or `bundle exec` as appropriate.
+- For one-off Ruby or Rails runner scripts, prefer checked-in temp files under `tmp/` plus `bin/rails runner tmp/script.rb`.
+- Avoid inline `bin/rails runner "..."` snippets when possible; shell quoting can be fragile.
+- Discover available commands with `bin/rails --help` and `bin/rails runner --help`.
+
+```bash
+bundle exec rspec              # run specs (single process)
+bundle exec rake spec:parallel # run specs in parallel (faster, use for full suite)
+bundle exec rubocop
+bin/rails db:migrate
+```
+
+## Documentation-First Policy
+
+To avoid filling agent context, keep this file brief and reference detailed docs.
+
+- [docs/development.md](docs/development.md)
+- [docs/testing.md](docs/testing.md)
+- [docs/performance.md](docs/performance.md)
+
+## Quality Expectations
+
+- Add or update specs for every behavior change.
+- 100% line and 100% branch coverage is required. Review `coverage/index.html` after running specs.
+- In tests, stub real git commands and filesystem side effects instead of creating real repos or mutating files on disk, unless a true integration path explicitly requires it.
+- Tests must never spawn real external CLI processes. Global stubs in `spec/support/` block these by default — see [docs/testing.md](docs/testing.md) for details.
+- Run relevant checks before finishing work.
+- Keep changes small, explicit, and aligned with existing patterns.
+- Update the relevant document in [docs/](docs/) when behavior changes.

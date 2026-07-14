@@ -1,0 +1,14 @@
+# frozen_string_literal: true
+
+require "rails_helper"
+require "support/faraday"
+
+RSpec.describe "Example API", :vcr do
+  it "fetches data from an external API" do
+    # VCR cassette: spec/cassettes/Example_API/fetches_data_from_an_external_API.yml
+    # This example demonstrates the VCR + Faraday pattern.
+    # Record a real cassette by running this spec once with VCR record mode enabled.
+    response = FaradayFactory.build(url: "https://api.example.com").get("/data")
+    expect(response.status).to eq(200)
+  end
+end

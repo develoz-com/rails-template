@@ -1,0 +1,53 @@
+# PostgreSQL 18+ configuration.
+# Requires PostgreSQL 18 or newer.
+default: &default
+  adapter: postgresql
+  encoding: unicode
+  pool: <%= ENV.fetch("DATABASE_POOL", 10) %>
+  host: <%= ENV.fetch("DATABASE_HOST", "localhost") %>
+  port: <%= ENV.fetch("DATABASE_PORT", 5432) %>
+  username: <%= ENV.fetch("DATABASE_USER", "postgres") %>
+  password: <%= ENV.fetch("DATABASE_PASSWORD", "") %>
+
+development:
+  primary:
+    <<: *default
+    database: <%= app_name %>_development
+  queue:
+    <<: *default
+    database: <%= app_name %>_queue_development
+  cache:
+    <<: *default
+    database: <%= app_name %>_cache_development
+  cable:
+    <<: *default
+    database: <%= app_name %>_cable_development
+
+test:
+  primary:
+    <<: *default
+    database: <%= app_name %>_test<%= ENV.fetch("TEST_ENV_NUMBER", "") %>
+  queue:
+    <<: *default
+    database: <%= app_name %>_queue_test<%= ENV.fetch("TEST_ENV_NUMBER", "") %>
+  cache:
+    <<: *default
+    database: <%= app_name %>_cache_test<%= ENV.fetch("TEST_ENV_NUMBER", "") %>
+  cable:
+    <<: *default
+    database: <%= app_name %>_cable_test<%= ENV.fetch("TEST_ENV_NUMBER", "") %>
+
+production:
+  primary:
+    <<: *default
+    url: <%= ENV.fetch("DATABASE_URL", "") %>
+    database: <%= app_name %>_production
+  queue:
+    <<: *default
+    database: <%= app_name %>_queue_production
+  cache:
+    <<: *default
+    database: <%= app_name %>_cache_production
+  cable:
+    <<: *default
+    database: <%= app_name %>_cable_production

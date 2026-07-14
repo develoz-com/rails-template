@@ -1,0 +1,5 @@
+# frozen_string_literal: true
+
+# PgSearch is included in models via the searchable concern (see T15).
+# This initializer is reserved for future global PgSearch configuration.
+# https://github.com/Casecommons/pg_search

@@ -1,0 +1,8 @@
+# frozen_string_literal: true
+
+namespace :docs do
+  desc "Check platform-guide docs are in sync with their documented system specs"
+  task :check do # rubocop:disable Rails/RakeEnvironment
+    ruby "bin/generate-docs --check"
+  end
+end

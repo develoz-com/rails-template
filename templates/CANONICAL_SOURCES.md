@@ -26,6 +26,10 @@ This document maps generator tasks to their canonical source files in external r
 | docs_render (T19) | LooperInsights/looper_core | `app/controllers/docs_controller.rb` | — | `templates/app/controllers/docs_controller.rb.tt` | adapted (AdminController -> ApplicationController) |
 | docs_render (T19) | LooperInsights/looper_core | `app/views/docs/show.html.haml` | — | `templates/app/views/docs/show.html.erb.tt` | adapted (HAML -> ERB, inner ERB escaped with `<%%= %>`) |
 | docs_render (T19) | — | — | — | `templates/config/initializers/redcarpet_rouge.rb.tt` | authored (looper_core has no separate initializer; Document model handles config inline) |
+| doc_specs (T20) | LooperInsights/looper_core | `bin/generate-docs` | `spec/fixtures/canonical/LooperInsights-looper_core/bin/generate-docs` | `templates/bin/generate-docs.tt` | verbatim |
+| doc_specs (T20) | LooperInsights/looper_core | `spec/rails_helper.rb` (inline module) | — | `templates/spec/support/doc_screenshot_helper.rb.tt` | authored (extracted from rails_helper.rb inline module into standalone support file) |
+| doc_specs (T20) | LooperInsights/looper_core | `Rakefile` (inline task) | — | `templates/lib/tasks/docs_check.rake.tt` | adapted (extracted docs:check namespace from Rakefile into standalone rake file) |
+| doc_specs (T20) | — | — | — | `templates/spec/system/example_doc_spec.rb.tt` | authored (demonstrates @category, @order, doc_screenshot pattern) |
 
 ## Pipeline Workflow
 

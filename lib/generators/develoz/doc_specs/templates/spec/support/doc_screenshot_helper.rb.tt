@@ -1,0 +1,17 @@
+# frozen_string_literal: true
+
+# Helper method for conditional screenshot capture
+# Usage: doc_screenshot('01_page_name')
+# Enable with: SCREENSHOTS=true rspec spec/...
+module DocScreenshotHelper
+  def doc_screenshot(filename)
+    return unless ENV["SCREENSHOTS"] == "true"
+
+    sleep 0.5 # Allow time for animations to complete
+    save_screenshot(Rails.root.join("docs/screenshots/#{filename}.png")) # rubocop:disable Lint/Debugger
+  end
+end
+
+RSpec.configure do |config|
+  config.include DocScreenshotHelper, type: :system
+end

@@ -1,0 +1,24 @@
+{
+  "name": "<%= app_class %>",
+  "short_name": "<%= app_class %>",
+  "icons": [
+    {
+      "src": "/icon.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    },
+    {
+      "src": "/icon.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "maskable"
+    }
+  ],
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "natural",
+  "description": "<%= app_class %>.",
+  "theme_color": "#ffffff",
+  "background_color": "#ffffff"
+}

@@ -1,0 +1,109 @@
+// Develoz PWA service worker - offline caching + offline fallback page
+// Push notification handlers are added by the develoz:push generator (T27)
+
+const STATIC_CACHE = "develoz-static-v1"
+const PAGES_CACHE = "develoz-pages-v1"
+const OFFLINE_URL = "/offline"
+
+// App shell assets to pre-cache on install
+const APP_SHELL = [
+  "/",
+  OFFLINE_URL
+]
+
+// install: pre-cache the app shell
+self.addEventListener("install", (event) => {
+  event.waitUntil(
+    caches.open(STATIC_CACHE).then((cache) => cache.addAll(APP_SHELL))
+  )
+  self.skipWaiting()
+})
+
+// activate: clean up old caches
+self.addEventListener("activate", (event) => {
+  const validCaches = [STATIC_CACHE, PAGES_CACHE]
+  event.waitUntil(
+    caches.keys().then((cacheNames) =>
+      Promise.all(
+        cacheNames
+          .filter((name) => !validCaches.includes(name))
+          .map((name) => caches.delete(name))
+      )
+    )
+  )
+  self.clients.claim()
+})
+
+// fetch: cache-first for app shell, network-first for everything else
+self.addEventListener("fetch", (event) => {
+  const request = event.request
+
+  // Only handle GET requests
+  if (request.method !== "GET") return
+
+  const url = new URL(request.url)
+
+  // Same-origin only
+  if (url.origin !== self.location.origin) return
+
+  // Cache-first for static assets (JS, CSS, fonts, images)
+  if (isStaticAsset(request)) {
+    event.respondWith(cacheFirst(request, STATIC_CACHE))
+    return
+  }
+
+  // Network-first for HTML pages with offline fallback
+  if (request.mode === "navigate" || request.headers.get("accept")?.includes("text/html")) {
+    event.respondWith(networkFirstWithOffline(request))
+    return
+  }
+
+  // Network-first for everything else
+  event.respondWith(networkFirst(request, PAGES_CACHE))
+})
+
+function isStaticAsset(request) {
+  const destination = request.destination
+  return ["style", "script", "font", "image", "manifest"].includes(destination)
+}
+
+async function cacheFirst(request, cacheName) {
+  const cache = await caches.open(cacheName)
+  const cached = await cache.match(request)
+  if (cached) return cached
+  try {
+    const response = await fetch(request)
+    if (response.ok) cache.put(request, response.clone())
+    return response
+  } catch {
+    return new Response("", { status: 504, statusText: "Gateway Timeout" })
+  }
+}
+
+async function networkFirst(request, cacheName) {
+  const cache = await caches.open(cacheName)
+  try {
+    const response = await fetch(request)
+    if (response.ok) cache.put(request, response.clone())
+    return response
+  } catch {
+    const cached = await cache.match(request)
+    return cached || new Response("", { status: 504, statusText: "Gateway Timeout" })
+  }
+}
+
+async function networkFirstWithOffline(request) {
+  const cache = await caches.open(PAGES_CACHE)
+  try {
+    const response = await fetch(request)
+    if (response.ok) cache.put(request, response.clone())
+    return response
+  } catch {
+    const cached = await cache.match(request)
+    if (cached) return cached
+    // Fall back to the offline page
+    const offlineCache = await caches.open(STATIC_CACHE)
+    const offlinePage = await offlineCache.match(OFFLINE_URL)
+    return offlinePage || new Response("You're offline", { status: 503, headers: { "Content-Type": "text/html" } })
+  }
+}

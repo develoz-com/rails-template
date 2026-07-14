@@ -1,0 +1,25 @@
+// Develoz PWA service worker registration
+// Registers the service worker and handles update found
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker
+      .register("/service-worker")
+      .then((registration) => {
+        registration.addEventListener("updatefound", () => {
+          const installingWorker = registration.installing
+          if (installingWorker) {
+            installingWorker.addEventListener("statechange", () => {
+              if (installingWorker.state === "installed" && navigator.serviceWorker.controller) {
+                // New version available - reload to activate
+                window.location.reload()
+              }
+            })
+          }
+        })
+      })
+      .catch((error) => {
+        console.error("Service worker registration failed:", error)
+      })
+  })
+}

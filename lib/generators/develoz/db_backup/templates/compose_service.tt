@@ -1,0 +1,14 @@
+  # db-backup service (develoz:db_backup)
+  db-backup:
+    image: postgres:18
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgres://postgres:postgres@postgres:5432/<%= app_name %>_development}
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-7}
+    volumes:
+      - ./backups:/backups
+      - postgres_data:/var/lib/postgresql/data:ro
+    entrypoint: ["/bin/sh", "-c"]
+    command: ["while true; do bin/db-backup; sleep 21600; done"]
+    depends_on:
+      postgres:
+        condition: service_healthy

@@ -1,0 +1,48 @@
+# frozen_string_literal: true
+
+namespace :backup do
+  desc "Create a gzipped PostgreSQL backup in ./backups (DATABASE_URL, BACKUP_RETENTION_DAYS)"
+  task create: :environment do
+    require "open3"
+
+    retention_days = ENV.fetch("BACKUP_RETENTION_DAYS", "7").to_i
+    backup_dir = Rails.root.join("backups")
+    FileUtils.mkdir_p(backup_dir)
+
+    timestamp = Time.current.strftime("%Y%m%d_%H%M%S")
+    backup_file = backup_dir.join("db_#{timestamp}.sql.gz")
+
+    puts "Creating backup: #{backup_file}"
+
+    Open3.popen3("pg_dump", ENV.fetch("DATABASE_URL")) do |_, stdout, _, wait|
+      Zlib::GzipWriter.open(backup_file) do |gz|
+        gz.write(stdout.read)
+      end
+      raise "pg_dump failed" unless wait.value.success?
+    end
+
+    puts "Backup created: #{backup_file}"
+
+    prune(backup_dir, retention_days)
+  end
+
+  desc "Prune backups older than BACKUP_RETENTION_DAYS (default: 7)"
+  task prune: :environment do
+    retention_days = ENV.fetch("BACKUP_RETENTION_DAYS", "7").to_i
+    prune(Rails.root.join("backups"), retention_days)
+  end
+
+  def prune(backup_dir, retention_days)
+    cutoff = retention_days.days.ago
+    removed = 0
+
+    Dir.glob(backup_dir.join("db_*.sql.gz")).each do |file|
+      next unless File.mtime(file) < cutoff
+
+      File.delete(file)
+      removed += 1
+    end
+
+    puts "Pruned #{removed} backup(s) older than #{retention_days} days."
+  end
+end

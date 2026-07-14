@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# bin/db-backup - PostgreSQL backup with retention
+# Usage: bin/db-backup
+# Env: DATABASE_URL, BACKUP_RETENTION_DAYS (default: 7)
+
+RETENTION_DAYS="${BACKUP_RETENTION_DAYS:-7}"
+BACKUP_DIR="${BACKUP_DIR:-./backups}"
+TIMESTAMP="$(date +%Y%m%d_%H%M%S)"
+BACKUP_FILE="${BACKUP_DIR}/db_${TIMESTAMP}.sql.gz"
+
+mkdir -p "${BACKUP_DIR}"
+
+echo "Creating backup: ${BACKUP_FILE}"
+
+pg_dump "${DATABASE_URL}" | gzip > "${BACKUP_FILE}"
+
+echo "Backup created: ${BACKUP_FILE}"
+
+echo "Pruning backups older than ${RETENTION_DAYS} days..."
+find "${BACKUP_DIR}" -name "db_*.sql.gz" -type f -mtime "+${RETENTION_DAYS}" -delete
+
+echo "Done. Current backups:"
+ls -1 "${BACKUP_DIR}"/db_*.sql.gz 2>/dev/null || echo "  (none)"

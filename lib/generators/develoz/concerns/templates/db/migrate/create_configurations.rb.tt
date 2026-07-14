@@ -1,0 +1,24 @@
+# frozen_string_literal: true
+
+# Creates the polymorphic configurations table used by the Configurable concern.
+# Requires the pgcrypto extension for UUID generation.
+class CreateConfigurations < ActiveRecord::Migration[8.0]
+  disable_ddl_transaction!
+
+  def change
+    enable_extension "pgcrypto" unless extension_enabled?("pgcrypto")
+
+    create_table :configurations, id: :uuid, default: "public.uuid_generate_v1()" do |t|
+      t.string :key, null: false, index: true
+      t.jsonb :value, null: false, default: {}
+      t.string :configurable_type
+      t.uuid :configurable_id
+      t.boolean :active, default: true, null: false
+
+      t.timestamps
+    end
+
+    add_index :configurations, %i[configurable_type configurable_id], algorithm: :concurrently
+    add_index :configurations, %i[key configurable_type configurable_id], unique: true, algorithm: :concurrently
+  end
+end

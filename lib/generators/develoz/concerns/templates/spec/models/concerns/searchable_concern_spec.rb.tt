@@ -1,0 +1,84 @@
+# frozen_string_literal: true
+
+require "rails_helper"
+
+describe SearchableConcern do
+  # This spec tests the SearchableConcern module.
+  # Replace `SearchableModel` with a real model in your app that calls `searchable_by`.
+  before(:all) do
+    ActiveRecord::Schema.define do
+      create_table :searchable_models, force: true do |t|
+        t.string :name
+        t.string :description
+      end
+    end
+  end
+
+  after(:all) do
+    ActiveRecord::Schema.define { drop_table :searchable_models, if_exists: true }
+  end
+
+  let(:model_class) do
+    stub_const("SearchableModel", Class.new(ApplicationRecord) do
+      self.table_name = "searchable_models"
+      include SearchableConcern
+      searchable_by :name, :description
+    end)
+  end
+
+  describe ".searchable_by" do
+    it "adds search_by_text scope to model" do
+      expect(model_class).to respond_to(:search_by_text)
+    end
+
+    it "returns records matching search text on configured columns" do
+      match = model_class.create!(name: "The Matrix")
+      no_match = model_class.create!(name: "Inception")
+
+      results = model_class.search_by_text("matrix")
+
+      expect(results).to include(match)
+      expect(results).not_to include(no_match)
+    end
+
+    it "supports prefix matching" do
+      record = model_class.create!(name: "Interstellar")
+
+      results = model_class.search_by_text("inter")
+
+      expect(results).to include(record)
+    end
+
+    it "is idempotent when called multiple times on the same class" do
+      expect { model_class.searchable_by(:name) }.not_to raise_error
+      expect(model_class.ancestors.count(PgSearch::Model)).to eq(1)
+    end
+
+    it "returns empty when no matches found" do
+      model_class.create!(name: "The Matrix")
+
+      results = model_class.search_by_text("xyz123nonexistent")
+
+      expect(results).to be_empty
+    end
+  end
+
+  describe ".search" do
+    it "delegates to search_by_text when query is present" do
+      match = model_class.create!(name: "The Matrix")
+      model_class.create!(name: "Inception")
+
+      results = model_class.search("matrix")
+
+      expect(results).to include(match)
+    end
+
+    it "returns all records when query is blank" do
+      match1 = model_class.create!(name: "The Matrix")
+      match2 = model_class.create!(name: "Inception")
+
+      expect(model_class.search("")).to include(match1, match2)
+      expect(model_class.search(nil)).to include(match1, match2)
+    end
+  end
+end

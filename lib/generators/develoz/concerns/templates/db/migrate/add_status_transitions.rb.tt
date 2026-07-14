@@ -1,0 +1,27 @@
+# frozen_string_literal: true
+
+# Adds the columns required by the Transitionable concern to a model.
+# Copy this migration and replace `:records` with your model's table name.
+class AddStatusTransitions < ActiveRecord::Migration[8.0]
+  disable_ddl_transaction!
+
+  def up
+    unless column_exists?(:records, :status)
+      add_column :records, :status, :string, default: "pending", null: false
+    end
+
+    unless column_exists?(:records, :status_transitions)
+      add_column :records, :status_transitions, :jsonb, default: [], null: false
+    end
+
+    return if index_exists?(:records, :status)
+
+    add_index :records, :status, algorithm: :concurrently
+  end
+
+  def down
+    remove_index :records, :status if index_exists?(:records, :status)
+    remove_column :records, :status_transitions if column_exists?(:records, :status_transitions)
+    remove_column :records, :status if column_exists?(:records, :status)
+  end
+end

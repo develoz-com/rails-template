@@ -19,6 +19,9 @@ This document maps generator tasks to their canonical source files in external r
 | ci (T13) | mauriciozaffari/ams2stats | `bin/ci`, `config/ci.rb` | — | `templates/bin/ci.tt`, `templates/config/ci.rb.tt` | adapted, extended linter set |
 | ci (T13) | LooperInsights/looper_core | `.rubocop.yml`, `.reek.yml`, `biome.json`, `.stylelintrc.json`, `.haml-lint.yml`, `.markdownlint.yaml`, `.yamllint` | — | `templates/.rubocop.yml.tt`, `templates/.reek.yml.tt`, `templates/biome.json.tt`, `templates/.stylelintrc.json.tt`, `templates/.haml-lint.yml.tt`, `templates/.markdownlint.json.tt`, `templates/.yamllint.tt` | adapted, simplified for new Rails apps |
 | ci (T13) | — | — | — | `templates/.github/workflows/ci.yml.tt` | authored (simple CI runner) |
+| concerns (T15) | LooperInsights/looper_core | `app/models/concerns/searchable_concern.rb`, `app/models/concerns/optimized_finders.rb`, `app/models/concerns/transitionable.rb`, `app/models/concerns/configurable.rb` | `spec/fixtures/canonical/LooperInsights-looper_core/app/models/concerns/...` | `templates/app/models/concerns/...tt` | verbatim |
+| concerns (T15) | LooperInsights/looper_core | `db/migrate/20260506120000_add_status_columns_to_merchandizing_pages.rb`, `db/migrate/20250524195130_create_configurations.rb` | — | `templates/db/migrate/add_status_transitions.rb.tt`, `templates/db/migrate/create_configurations.rb.tt` | adapted (generic table names) |
+| concerns (T15) | — | — | — | `templates/spec/models/concerns/...tt` | authored (modeled on looper_core specs) |
 
 ## Pipeline Workflow
 

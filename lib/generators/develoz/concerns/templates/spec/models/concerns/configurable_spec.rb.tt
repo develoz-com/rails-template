@@ -1,0 +1,157 @@
+# frozen_string_literal: true
+
+require "rails_helper"
+
+describe Configurable do
+  # This spec tests the Configurable concern.
+  # It creates a test model with a polymorphic configuration association.
+  before(:all) do
+    ActiveRecord::Schema.define do
+      create_table :configurable_records, force: true do |t|
+        t.string :name
+      end
+    end
+  end
+
+  after(:all) do
+    ActiveRecord::Schema.define { drop_table :configurable_records, if_exists: true }
+  end
+
+  let(:test_class) do
+    stub_const("ConfigurableRecord", Class.new(ApplicationRecord) do
+      self.table_name = "configurable_records"
+      include Configurable
+      configurable :highest_format_only, :boolean
+      configurable :report_groups, :array
+      configurable :feature_flags, :hash, global_fallback: true
+    end)
+  end
+
+  let(:record) { test_class.create!(name: "test") }
+
+  describe ".configurable with a boolean attribute" do
+    it "casts an assigned value and exposes it through the predicate" do
+      record.highest_format_only = "true"
+
+      expect(record.highest_format_only?).to be(true)
+    end
+
+    it "reads the predicate from its own configuration key" do
+      record.update_configuration(:highest_format_only, true)
+
+      expect(record.highest_format_only?).to be(true)
+    end
+
+    it "persists the assigned value to its own configuration key on save" do
+      record.update!(highest_format_only: "true")
+
+      expect(record.configuration_value(:highest_format_only)).to be(true)
+    end
+
+    it "leaves the configuration untouched when nothing was assigned" do
+      record.update_configuration(:highest_format_only, true)
+
+      expect { record.update!(name: "changed") }.not_to(change do
+        record.configuration_value(:highest_format_only)
+      end)
+    end
+  end
+
+  describe ".configurable with a value attribute" do
+    it "reads the scoped value for the key" do
+      record.update_configuration(:report_groups, %w[APAC EMEA])
+
+      expect(record.report_groups).to eq(%w[APAC EMEA])
+    end
+
+    it "returns the default when no configuration exists" do
+      expect(record.report_groups).to eq([])
+    end
+
+    it "persists an assigned value to its own key on save" do
+      record.update!(report_groups: %w[APAC])
+
+      expect(record.configuration_value(:report_groups)).to eq(%w[APAC])
+    end
+
+    it "deletes the scoped record when assigned nil" do
+      record.update_configuration(:report_groups, %w[APAC])
+
+      expect { record.update!(report_groups: nil) }
+        .to change { record.configuration_for(:report_groups) }.to(nil)
+    end
+  end
+
+  describe ".configurable with global_fallback" do
+    it "merges the global value under the scoped one" do
+      Configuration.create!(key: "feature_flags", value: { "a" => true, "b" => true })
+      record.update_configuration(:feature_flags, { "b" => false })
+
+      expect(record.feature_flags).to eq("a" => true, "b" => false)
+    end
+
+    it "falls back to the global value when no scoped override exists" do
+      Configuration.create!(key: "feature_flags", value: { "a" => true })
+
+      expect(record.feature_flags).to eq("a" => true)
+    end
+  end
+
+  describe "#configuration_for" do
+    it "returns the active scoped configuration for the key" do
+      config = record.update_configuration("demo", { "enabled" => true })
+
+      expect(record.configuration_for("demo")).to eq(config)
+    end
+
+    it "ignores inactive configurations" do
+      Configuration.create!(key: "demo", configurable_type: "ConfigurableRecord",
+                            configurable_id: record.id, value: { "enabled" => true }, active: false)
+
+      expect(record.configuration_for("demo")).to be_nil
+    end
+
+    it "ignores configurations scoped to a different record" do
+      other = test_class.create!(name: "other")
+      other.update_configuration("demo", { "enabled" => true })
+
+      expect(record.configuration_for("demo")).to be_nil
+    end
+  end
+
+  describe "#configuration_value" do
+    it "returns the stored value" do
+      record.update_configuration("demo", { "count" => 3 })
+
+      expect(record.configuration_value("demo")).to eq("count" => 3)
+    end
+
+    it "returns the default when no configuration exists" do
+      expect(record.configuration_value("demo", default: "fallback")).to eq("fallback")
+    end
+  end
+
+  describe "#update_configuration" do
+    it "creates a configuration when none exists" do
+      expect { record.update_configuration("demo", { "enabled" => true }) }
+        .to change(Configuration, :count).by(1)
+    end
+
+    it "updates the existing configuration in place" do
+      record.update_configuration("demo", { "enabled" => false })
+
+      expect { record.update_configuration("demo", { "enabled" => true }) }
+        .not_to change(Configuration, :count)
+      expect(record.configuration_value("demo")).to eq("enabled" => true)
+    end
+  end
+
+  describe "#delete_configuration" do
+    it "removes the scoped configuration" do
+      record.update_configuration("demo", { "enabled" => true })
+
+      expect { record.delete_configuration("demo") }.to change(Configuration, :count).by(-1)
+      expect(record.configuration_for("demo")).to be_nil
+    end
+  end
+end

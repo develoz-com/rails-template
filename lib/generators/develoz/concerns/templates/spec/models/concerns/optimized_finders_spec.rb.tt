@@ -1,0 +1,148 @@
+# frozen_string_literal: true
+
+require "rails_helper"
+
+describe OptimizedFinders do
+  # This spec tests the OptimizedFinders module.
+  # It creates a parent/child relationship to exercise both class-level and
+  # association-level finders.
+  before(:all) do
+    ActiveRecord::Schema.define do
+      create_table :parents, force: true do |t|
+        t.string :name
+      end
+
+      create_table :children, force: true do |t|
+        t.references :parent, foreign_key: true
+        t.string :license
+        t.string :variant
+      end
+    end
+  end
+
+  after(:all) do
+    ActiveRecord::Schema.define do
+      drop_table :children, if_exists: true
+      drop_table :parents, if_exists: true
+    end
+  end
+
+  let(:parent_class) do
+    stub_const("Parent", Class.new(ApplicationRecord) do
+      self.table_name = "parents"
+      has_many :children, class_name: "Child", foreign_key: :parent_id
+    end)
+  end
+
+  let(:child_class) do
+    stub_const("Child", Class.new(ApplicationRecord) do
+      self.table_name = "children"
+      belongs_to :parent, class_name: "Parent"
+
+      def format
+        variant&.upcase
+      end
+    end)
+  end
+
+  let(:parent) { parent_class.create!(name: "parent") }
+
+  describe ".find_for" do
+    it "finds a record by single attribute" do
+      record = child_class.create!(license: "buy", variant: "hd")
+
+      expect(child_class.find_for(license: "buy")).to eq(record)
+    end
+
+    it "finds a record by multiple attributes" do
+      record = child_class.create!(license: "buy", variant: "hd")
+      child_class.create!(license: "rent", variant: "hd")
+
+      expect(child_class.find_for(license: "buy", variant: "hd")).to eq(record)
+    end
+
+    it "returns nil when no match is found" do
+      child_class.create!(license: "buy", variant: "hd")
+
+      expect(child_class.find_for(license: "rent", variant: "sd")).to be_nil
+    end
+  end
+
+  describe ".for" do
+    it "finds records by single attribute" do
+      r1 = child_class.create!(license: "buy", variant: "hd")
+      r2 = child_class.create!(license: "buy", variant: "sd")
+      child_class.create!(license: "rent", variant: "hd")
+
+      results = child_class.for(license: "buy")
+
+      expect(results).to contain_exactly(r1, r2)
+    end
+
+    it "returns empty array when no match is found" do
+      child_class.create!(license: "buy", variant: "hd")
+
+      expect(child_class.for(license: "rent", variant: "sd")).to be_empty
+    end
+  end
+
+  describe ".not_for" do
+    it "finds records NOT matching the given attributes" do
+      child_class.create!(license: "buy", variant: "hd")
+      rent = child_class.create!(license: "rent", variant: "hd")
+
+      results = child_class.not_for(license: "buy")
+
+      expect(results).to contain_exactly(rent)
+    end
+  end
+
+  describe ".gather" do
+    it "plucks values across all records" do
+      child_class.create!(license: "buy", variant: "hd")
+      child_class.create!(license: "rent", variant: "sd")
+
+      expect(child_class.gather(:license)).to contain_exactly("buy", "rent")
+    end
+
+    it "returns tuples for multiple columns" do
+      child_class.create!(license: "buy", variant: "hd")
+      child_class.create!(license: "rent", variant: "sd")
+
+      expect(child_class.gather(:license, :variant)).to contain_exactly(%w[buy hd], %w[rent sd])
+    end
+  end
+
+  describe "association-level optimization" do
+    it "uses in-memory search without SQL when association is loaded" do
+      record = child_class.create!(parent:, license: "buy", variant: "hd")
+      child_class.create!(parent:, license: "rent", variant: "hd")
+
+      parent.children.load
+
+      query_count = 0
+      counter = ->(*, **) { query_count += 1 }
+      ActiveSupport::Notifications.subscribed(counter, "sql.active_record") do
+        found = parent.children.find_for(license: "buy", variant: "hd")
+        expect(found).to eq(record)
+      end
+      expect(query_count).to eq(0)
+    end
+
+    it "uses database query when association is not loaded" do
+      record = child_class.create!(parent:, license: "buy", variant: "hd")
+
+      found = parent.children.find_for(license: "buy", variant: "hd")
+      expect(found).to eq(record)
+    end
+
+    it "uses in-memory search for non-database attributes" do
+      record = child_class.create!(parent:, license: "buy", variant: "hd")
+
+      expect(child_class.column_names).not_to include("format")
+
+      found = parent.children.find_for(format: "HD")
+      expect(found).to eq(record)
+    end
+  end
+end

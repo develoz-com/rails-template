@@ -1,0 +1,201 @@
+# frozen_string_literal: true
+
+require "rails_helper"
+
+describe Transitionable do
+  # This spec tests the Transitionable concern.
+  # It creates a test table with status + status_transitions columns.
+  before(:all) do
+    ActiveRecord::Schema.define do
+      create_table :transitionable_records, force: true do |t|
+        t.string :status, default: "pending", null: false
+        t.jsonb :status_transitions, default: [], null: false
+      end
+    end
+  end
+
+  after(:all) do
+    ActiveRecord::Schema.define { drop_table :transitionable_records, if_exists: true }
+  end
+
+  let(:test_class) do
+    stub_const("TransitionableRecord", Class.new(ApplicationRecord) do
+      self.table_name = "transitionable_records"
+      extend Transitionable
+    end)
+  end
+
+  describe ".states with kwargs transitions map" do
+    before { test_class.states(pending: %i[paid], paid: []) }
+
+    it "declares an enum keyed by the declared states" do
+      expect(test_class.statuses.keys).to eq(%w[pending paid])
+    end
+
+    it "exposes the transition map" do
+      expect(test_class.transitions).to eq(pending: %i[paid].freeze, paid: [].freeze)
+    end
+  end
+
+  describe ".states with positional transitions hash" do
+    it "parses the hash and exposes the transitions" do
+      test_class.states({ draft: %i[review], review: %i[draft published] })
+
+      expect(test_class.statuses.keys).to eq(%w[draft review])
+      expect(test_class.transitions[:review]).to eq(%i[draft published].freeze)
+    end
+  end
+
+  describe ".states with positional array of states" do
+    it "declares free-mode states (transitions is nil)" do
+      test_class.states(%i[draft review published])
+
+      expect(test_class.statuses.keys).to eq(%w[draft review published])
+      expect(test_class.transitions).to be_nil
+    end
+  end
+
+  describe ".states with splat positional symbols" do
+    it "declares free-mode states (transitions is nil)" do
+      test_class.states(:a, :b, :c)
+
+      expect(test_class.statuses.keys).to eq(%w[a b c])
+      expect(test_class.transitions).to be_nil
+    end
+  end
+
+  describe ".states validation" do
+    it "raises when given both kwargs and positional args" do
+      expect { test_class.states(:a, pending: %i[paid]) }
+        .to raise_error(ArgumentError, /transitions hash or a list of states/)
+    end
+
+    it "raises when given no states" do
+      expect { test_class.states }
+        .to raise_error(ArgumentError, /at least one state/)
+    end
+  end
+
+  describe "integration with strict transitions" do
+    before { test_class.states(pending: %i[paid cancelled], paid: [], cancelled: []) }
+
+    it "uses the first declared state as default" do
+      expect(test_class.create!.status).to eq("pending")
+    end
+
+    it "records the initial status as the first transition on create" do
+      record = test_class.create!
+
+      expect(record.status_transitions.length).to eq(1)
+      expect(record.status_transitions.first).to include("to_state" => "pending")
+    end
+
+    it "does not record an initial transition when status_transitions is pre-populated" do
+      record = test_class.create!(
+        status_transitions: [{ "to_state" => "pending", "created_at" => "2024-01-01T00:00:00.000000Z" }]
+      )
+
+      expect(record.status_transitions.length).to eq(1)
+    end
+
+    it "transitions and appends to status_transitions" do
+      record = test_class.create!
+
+      expect { record.paid_status! }
+        .to change(record, :status).from("pending").to("paid")
+        .and(change { record.status_transitions.length }.by(1))
+
+      expect(record.status_transitions.last["to_state"]).to eq("paid")
+    end
+
+    it "is a no-op when already in the target state" do
+      record = test_class.create!
+      transitions_before = record.status_transitions
+
+      record.pending_status!
+
+      expect(record.status_transitions).to eq(transitions_before)
+    end
+
+    it "records metadata when transition_metadata is set" do
+      record = test_class.create!(status: "paid")
+
+      record.update!(status: "cancelled", transition_metadata: { reason: "customer_request" })
+
+      expect(record.status_transitions.last).to include(
+        "to_state" => "cancelled",
+        "metadata" => { "reason" => "customer_request" }
+      )
+    end
+
+    it "raises ActiveRecord::RecordInvalid on a disallowed transition" do
+      record = test_class.create!
+
+      expect { record.cancelled_status! }.to raise_error(
+        ActiveRecord::RecordInvalid,
+        /Status cannot transition from "pending" to "cancelled"/
+      )
+    end
+  end
+
+  describe "#can_be_<state>?" do
+    before { test_class.states(pending: %i[paid], paid: []) }
+
+    it "returns true for an allowed transition" do
+      record = test_class.create!
+      expect(record.can_be_paid?).to be true
+    end
+
+    it "returns false for a disallowed transition" do
+      record = test_class.create!(status: "paid")
+      expect(record.can_be_pending?).to be false
+    end
+
+    context "when in free mode (transitions is nil)" do
+      before do
+        test_class.states(%i[draft published])
+        allow(test_class).to receive(:transitions).and_return(nil)
+      end
+
+      it "allows any declared state" do
+        record = test_class.create!
+        expect(record.can_be_published?).to be true
+      end
+    end
+  end
+
+  describe "#last_transition" do
+    before { test_class.states(pending: %i[paid], paid: []) }
+
+    it "returns nil when status_transitions is empty" do
+      record = test_class.create!
+      record.update_column(:status_transitions, [])
+
+      expect(record.last_transition).to be_nil
+    end
+
+    it "returns the latest entry as a Struct" do
+      record = test_class.create!(status: "paid")
+
+      transition = record.last_transition
+
+      expect(transition.to_state).to eq("paid")
+      expect(transition.metadata).to eq({})
+      expect(transition.created_at).to be_present
+    end
+  end
+
+  describe ".in_state" do
+    before { test_class.states(pending: %i[paid], paid: []) }
+
+    it "filters records by status" do
+      pending_record = test_class.create!
+      paid_record = test_class.create!(status: "paid")
+
+      in_pending = test_class.in_state(:pending)
+      expect(in_pending).to include(pending_record)
+      expect(in_pending).not_to include(paid_record)
+      expect(test_class.in_state(:pending, :paid)).to include(pending_record, paid_record)
+    end
+  end
+end

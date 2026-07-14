@@ -1,0 +1,18 @@
+# frozen_string_literal: true
+
+# Pagy initializer file
+# See https://ddnexus.github.io/pagy/resources/initializer/
+
+# Backend Extras
+require "pagy/extras/arel"
+require "pagy/extras/array"
+require "pagy/extras/countless"
+
+# Frontend Extras
+require "pagy/extras/bootstrap"
+
+# Default items per page
+Pagy::DEFAULT[:limit] = 25
+
+# When you are done setting your own default freeze it
+Pagy::DEFAULT.freeze

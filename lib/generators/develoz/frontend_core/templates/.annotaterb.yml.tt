@@ -1,0 +1,16 @@
+---
+:models: true
+:routes: false
+:active_admin: false
+:additional_file_patterns: []
+:exclude_tests: true
+:exclude_fixtures: true
+:exclude_factories: true
+:exclude_serializers: true
+:exclude_controllers: true
+:exclude_helpers: true
+:exclude_scaffolds: true
+:classified_sort: true
+:show_indexes: true
+:show_foreign_keys: true
+:position: after

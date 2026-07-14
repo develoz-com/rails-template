@@ -6,6 +6,7 @@ plugins:
 AllCops:
   TargetRubyVersion: 3.4
   NewCops: enable
+  SuggestExtensions: false
   Exclude:
     - "bin/**/*"
     - "exe/**/*"
@@ -26,9 +27,17 @@ RSpec/ExampleLength:
 RSpec/MultipleExpectations:
   Max: 3
 
+# CLI/generator gem legitimately writes to stdout; puts/say is the interface
+Rails/Output:
+  Enabled: false
+
+# Development dependencies intentionally declared in gemspec per gem best practices
+Gemspec/DevelopmentDependencies:
+  Enabled: false
+
+# Many small classes across generators; top-level doc comments add noise
 Style/Documentation:
-  Exclude:
-    - "spec/**/*"
+  Enabled: false
 
 Style/StringLiterals:
   EnforcedStyle: double_quotes

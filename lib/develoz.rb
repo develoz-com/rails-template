@@ -1,8 +1,11 @@
 # frozen_string_literal: true
 
-require_relative "develoz/version"
-require_relative "develoz/cli"
-
 module Develoz
   class Error < StandardError; end
+end
+
+require_relative "develoz/version"
+
+Dir[File.expand_path("develoz/**/*.rb", __dir__)].each do |file|
+  require file unless file.end_with?("version.rb")
 end

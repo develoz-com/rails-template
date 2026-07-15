@@ -1,35 +1,67 @@
-# Develoz::Rails
+# Develoz Rails
 
-TODO: Delete this and the text below, and describe your gem
+Develoz Rails is an opinionated application generator for Rails 8.1. It wraps
+`rails new` with a tested Develoz baseline and lets each application opt into
+product, deployment, and operations features as needed.
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/develoz/rails`. To experiment with that code, run `bin/console` for an interactive prompt.
+The generated baseline includes PostgreSQL, RSpec, the Solid stack, shared
+model concerns, strict loading, maintenance tasks, frontend conventions,
+documentation tooling, CI configuration, and application versioning.
 
-## Installation
+## Quickstart
 
-TODO: Replace `UPDATE_WITH_YOUR_GEM_NAME_IMMEDIATELY_AFTER_RELEASE_TO_RUBYGEMS_ORG` with your gem name right after releasing it to RubyGems.org. Please do not do it earlier due to security reasons. Alternatively, replace this section with instructions to install your gem from git if you don't plan to release to RubyGems.org.
-
-Install the gem and add to the application's Gemfile by executing:
-
-```bash
-bundle add UPDATE_WITH_YOUR_GEM_NAME_IMMEDIATELY_AFTER_RELEASE_TO_RUBYGEMS_ORG
-```
-
-If bundler is not being used to manage dependencies, install the gem by executing:
+Install the gem and generate an application:
 
 ```bash
-gem install UPDATE_WITH_YOUR_GEM_NAME_IMMEDIATELY_AFTER_RELEASE_TO_RUBYGEMS_ORG
+gem install develoz-rails
+develoz new my_app
 ```
 
-## Usage
+The interactive flow asks which optional features to include. For an
+unattended run, pass `--yes`; omitted opt-in features remain disabled:
 
-TODO: Write usage instructions here
+```bash
+develoz new my_app --yes --auth --ui --docker
+```
 
-## Development
+Use `--ruby=VERSION` or `--rails=VERSION` to select explicit toolchain
+versions. Run `develoz help new` for the complete command reference.
 
-After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
+For prerequisites and detailed setup, see the
+[installation guide](docs/guide/installation.md).
 
-To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and the created tag, and push the `.gem` file to [rubygems.org](https://rubygems.org).
+## Feature matrix
 
-## Contributing
+Core features are installed in every generated application.
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/develoz-rails.
+| Mode | Feature | Switch | What it adds |
+| --- | --- | --- | --- |
+| Core | Tooling | Always on | Editor settings, environment files, and shared application constants |
+| Core | Testing | Always on | RSpec, FactoryBot, Capybara, Selenium, parallel tests, and coverage |
+| Core | Solid stack | Always on | Solid Queue, Solid Cache, Solid Cable, and Mission Control Jobs |
+| Core | CI and quality | Always on | CI workflow plus Ruby, security, frontend, and documentation checks |
+| Core | Database | Always on | PostgreSQL configuration and `pg_search` |
+| Core | Shared concerns | Always on | Search, optimized finder, transition, and configuration concerns |
+| Core | Strict loading | Always on | Strict loading by default for Active Record models |
+| Core | Maintenance | Always on | Maintenance Tasks integration and task examples |
+| Core | Frontend | Always on | Importmap, Hotwire, AnnotateRb, and Pagy; use `--skip-pagy` to omit Pagy |
+| Core | Documentation renderer | Always on | Markdown documentation model, controller, view, assets, and route |
+| Core | Documentation specs | Always on | Documentation generation, checks, screenshots, and an example system spec |
+| Core | Agent documentation | Always on | `AGENTS.md`, development guides, PR template, and external API test support |
+| Core | Versioning | Always on | Application version constant, helper, and display partial |
+| Opt-in | REST API | `--api` | Blueprinter, RSwag, API base controller, routes, and request spec |
+| Opt-in | Authentication | `--auth` | Native Rails authentication models, controllers, views, routes, and specs |
+| Opt-in | Progressive Web App | `--pwa` | Web manifest, service worker, offline page, registration, and routes |
+| Opt-in | Push notifications | `--push` | Web Push subscriptions and notification support; also enables PWA support |
+| Opt-in | Active Resource | `--active-resource` | Active Resource dependency and application resource classes |
+| Opt-in | Admin | `--admin` | Admin base controller, layout, dashboard, and routes |
+| Opt-in | Develoz UI | `--ui` | Develoz UI integration and controller pins |
+| Opt-in | Kamal | `--kamal` | Kamal deployment configuration, secrets, and production Dockerfile |
+| Opt-in | Docker | `--docker` | Local Docker Compose workflow, development image, and helper scripts |
+| Opt-in | Database backups | `--db-backup` | Backup script, rake task, retention settings, and backup ignore rules |
+
+## Project documentation
+
+- [Installation guide](docs/guide/installation.md)
+- [Changelog](CHANGELOG.md)
+- [Contributing](CONTRIBUTING.md)

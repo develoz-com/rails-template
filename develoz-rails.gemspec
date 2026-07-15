@@ -8,12 +8,14 @@ Gem::Specification.new do |spec|
   spec.authors = ["Mauricio Zaffari"]
   spec.email = ["mauriciozaffari@gmail.com"]
 
-  spec.summary = "Rails generator and template framework for Develoz."
-  spec.description = "A Ruby gem providing generators and templates for Rails applications."
+  spec.summary = "Generate Rails 8.1 applications with Develoz conventions."
+  spec.description = "Develoz Rails provides a CLI and composable generators for creating Rails 8.1 applications " \
+                     "with a tested core stack and opt-in API, authentication, UI, deployment, and operations features."
   spec.homepage = "https://github.com/develoz/develoz-rails"
   spec.required_ruby_version = ">= 3.4"
   spec.metadata["homepage_uri"] = spec.homepage
-  spec.metadata["source_code_uri"] = spec.homepage
+  spec.metadata["source_code_uri"] = "#{spec.homepage}/tree/v#{spec.version}"
+  spec.metadata["changelog_uri"] = "#{spec.homepage}/blob/main/CHANGELOG.md"
   spec.metadata["rubygems_mfa_required"] = "true"
 
   # Specify which files should be added to the gem when it is released.

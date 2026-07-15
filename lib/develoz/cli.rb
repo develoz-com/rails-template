@@ -77,7 +77,7 @@ module Develoz
     def invoke_install(app_name, resolved)
       opts = resolved.merge(skip_pagy: options[:skip_pagy])
       Dir.chdir(app_name) do
-        Develoz::Generators::InstallGenerator.new([], opts, destination_root: File.expand_path(app_name)).install
+        Develoz::Generators::InstallGenerator.new([], opts, destination_root: Dir.pwd).install
       end
     end
   end

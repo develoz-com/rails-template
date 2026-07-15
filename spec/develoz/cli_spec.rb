@@ -3,7 +3,6 @@
 require "spec_helper"
 require "develoz/cli"
 
-# rubocop:disable RSpec/AnyInstance, RSpec/MultipleExpectations
 RSpec.describe Develoz::CLI do
   let(:resolver) { instance_double(Develoz::VersionResolver) }
   let(:install_gen) { instance_double(Develoz::Generators::InstallGenerator) }
@@ -15,7 +14,7 @@ RSpec.describe Develoz::CLI do
     allow(resolver).to receive(:write_ruby_version)
     allow(Develoz::Generators::InstallGenerator).to receive(:new).and_return(install_gen)
     allow(install_gen).to receive(:install)
-    allow_any_instance_of(described_class).to receive(:system).and_return(true)
+    allow_any_instance_of(described_class).to receive(:system).and_return(true) # rubocop:disable RSpec/AnyInstance
     allow(Dir).to receive(:chdir).and_yield
   end
 
@@ -23,7 +22,7 @@ RSpec.describe Develoz::CLI do
     expect { described_class.start(%w[version]) }.to output(/develoz #{Develoz::VERSION}/o).to_stdout
   end
 
-  it "generates app with --yes without prompting" do
+  it "generates app with --yes without prompting" do # rubocop:disable RSpec/MultipleExpectations
     expect { described_class.start(%w[new demo --yes]) }.to output(/Created demo/).to_stdout
     expect(resolver).to have_received(:resolve).with(ruby: nil, rails: nil)
     expect(resolver).to have_received(:write_tool_versions).with(anything, ruby: "4.0.5")
@@ -45,8 +44,7 @@ RSpec.describe Develoz::CLI do
   end
 
   it "raises on rails new failure" do
-    allow_any_instance_of(described_class).to receive(:system).and_return(false)
+    allow_any_instance_of(described_class).to receive(:system).and_return(false) # rubocop:disable RSpec/AnyInstance
     expect { described_class.start(%w[new demo --yes]) }.to raise_error(/Failed to generate/)
   end
 end
-# rubocop:enable RSpec/AnyInstance, RSpec/MultipleExpectations

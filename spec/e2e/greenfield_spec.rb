@@ -3,7 +3,6 @@
 require "spec_helper"
 require "open3"
 require "fileutils"
-require "pathname"
 require "tmpdir"
 
 # E2e specs for `develoz new` driving the full greenfield generation pipeline.
@@ -20,8 +19,7 @@ require "tmpdir"
 # requires the install generator), so the subprocess explicitly requires it
 # before invoking the CLI. This keeps the e2e spec self-contained without
 # patching source files outside this spec.
-# rubocop:disable RSpec/DescribeClass, RSpec/MultipleMemoizedHelpers
-RSpec.describe "develoz new (greenfield e2e)", :e2e, :slow do
+RSpec.describe "develoz new (greenfield e2e)", :e2e, :slow do # rubocop:disable RSpec/DescribeClass
   let(:gem_root) { File.expand_path("../..", __dir__) }
   let(:lib_dir) { File.join(gem_root, "lib") }
 
@@ -207,7 +205,7 @@ RSpec.describe "develoz new (greenfield e2e)", :e2e, :slow do
     end
   end
 
-  describe "default (core only)" do
+  describe "default (core only)" do # rubocop:disable RSpec/MultipleMemoizedHelpers
     let(:app_dir) { File.join(Dir.tmpdir, "develoz_e2e_default_#{SecureRandom.hex(8)}") }
     let(:dir) { app_dir }
     let(:exit_status) { generation_result[0] }
@@ -234,7 +232,7 @@ RSpec.describe "develoz new (greenfield e2e)", :e2e, :slow do
     end
   end
 
-  describe "flags-heavy (--api --auth --ui --admin --pwa --push --docker --kamal --db_backup)" do
+  describe "flags-heavy (--api --auth --ui --admin --pwa --push --docker --kamal --db_backup)" do # rubocop:disable RSpec/MultipleMemoizedHelpers
     let(:app_dir) { File.join(Dir.tmpdir, "develoz_e2e_full_#{SecureRandom.hex(8)}") }
     let(:dir) { app_dir }
     let(:flags) do
@@ -355,4 +353,3 @@ RSpec.describe "develoz new (greenfield e2e)", :e2e, :slow do
     end
   end
 end
-# rubocop:enable RSpec/DescribeClass, RSpec/MultipleMemoizedHelpers

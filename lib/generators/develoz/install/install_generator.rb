@@ -16,11 +16,12 @@ module Develoz
       class_option :docker, type: :boolean, default: false
       class_option :db_backup, type: :boolean, default: false
       class_option :skip_pagy, type: :boolean, default: false
-      class_option :yes, type: :boolean, default: false
 
       def install
         develoz_options = build_options
-        Develoz::Manifest.for(develoz_options).each { |entry| invoke_generator(entry.name) }
+        Develoz::Manifest.for(develoz_options).each do |entry|
+          invoke_generator(entry.name, develoz_options.to_h)
+        end
       end
 
       private
@@ -33,12 +34,16 @@ module Develoz
         Develoz::Options.new(**flags, app_name: app_name)
       end
 
-      def invoke_generator(name)
+      def invoke_generator(name, generator_options)
         require "generators/develoz/#{name}/#{name}_generator"
         klass = Develoz::Generators.const_get("#{name.camelize}Generator")
-        gen = klass.new([], {}, destination_root: destination_root)
+        gen = klass.new([], generator_options, destination_root: destination_root)
         klass.public_instance_methods(false).each { |method| gen.public_send(method) }
-      rescue LoadError, NameError
+      rescue LoadError
+        say "generator develoz:#{name} not yet available", :yellow
+      rescue NameError => e
+        raise unless e.name.to_s == "#{name.camelize}Generator"
+
         say "generator develoz:#{name} not yet available", :yellow
       end
     end

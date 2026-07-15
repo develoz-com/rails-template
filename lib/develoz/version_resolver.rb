@@ -61,7 +61,7 @@ module Develoz
       data = JSON.parse(response)
       version = data["version"]
       version.presence || RAILS_FALLBACK
-    rescue StandardError
+    rescue JSON::ParserError
       RAILS_FALLBACK
     end
 

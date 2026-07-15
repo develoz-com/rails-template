@@ -4,8 +4,7 @@ require "spec_helper"
 require "webmock/rspec"
 require "tmpdir"
 
-# rubocop:disable RSpec/MultipleMemoizedHelpers, RSpec/SubjectStub, RSpec/AnyInstance
-RSpec.describe Develoz::CanonicalFetcher do
+RSpec.describe Develoz::CanonicalFetcher do # rubocop:disable RSpec/MultipleMemoizedHelpers
   subject(:fetcher) { described_class.new }
 
   let(:repo) { "owner/repo" }
@@ -18,12 +17,12 @@ RSpec.describe Develoz::CanonicalFetcher do
 
   after { WebMock.reset! }
 
-  describe ".fetch" do
+  describe ".fetch" do # rubocop:disable RSpec/MultipleMemoizedHelpers
     it "delegates to instance fetch" do
       stub_request(:get, api_url)
         .to_return(status: 200, body: response_body)
 
-      allow_any_instance_of(described_class).to receive(:fetch_token).and_return("test-token")
+      allow_any_instance_of(described_class).to receive(:fetch_token).and_return("test-token") # rubocop:disable RSpec/AnyInstance
 
       described_class.fetch(repo: repo, path: path, dest: dest)
 
@@ -31,13 +30,13 @@ RSpec.describe Develoz::CanonicalFetcher do
     end
   end
 
-  describe "#fetch" do
-    context "with successful response" do
+  describe "#fetch" do # rubocop:disable RSpec/MultipleMemoizedHelpers
+    context "with successful response" do # rubocop:disable RSpec/MultipleMemoizedHelpers
       it "downloads and decodes file content" do
         stub_request(:get, api_url)
           .to_return(status: 200, body: response_body)
 
-        allow(fetcher).to receive(:fetch_token).and_return("test-token")
+        allow(fetcher).to receive(:fetch_token).and_return("test-token") # rubocop:disable RSpec/SubjectStub
 
         fetcher.fetch(repo: repo, path: path, dest: dest)
 
@@ -50,7 +49,7 @@ RSpec.describe Develoz::CanonicalFetcher do
         stub_request(:get, api_url)
           .to_return(status: 200, body: response_body)
 
-        allow(fetcher).to receive(:fetch_token).and_return("test-token")
+        allow(fetcher).to receive(:fetch_token).and_return("test-token") # rubocop:disable RSpec/SubjectStub
 
         fetcher.fetch(repo: repo, path: path, dest: nested_dest)
 
@@ -59,12 +58,12 @@ RSpec.describe Develoz::CanonicalFetcher do
       end
     end
 
-    context "with non-200 response" do
+    context "with non-200 response" do # rubocop:disable RSpec/MultipleMemoizedHelpers
       it "raises error with clear message" do
         stub_request(:get, api_url)
           .to_return(status: 404, body: "Not Found")
 
-        allow(fetcher).to receive(:fetch_token).and_return("test-token")
+        allow(fetcher).to receive(:fetch_token).and_return("test-token") # rubocop:disable RSpec/SubjectStub
 
         expect do
           fetcher.fetch(repo: repo, path: path, dest: dest)
@@ -75,7 +74,7 @@ RSpec.describe Develoz::CanonicalFetcher do
         stub_request(:get, api_url)
           .to_return(status: 500, body: "Server Error")
 
-        allow(fetcher).to receive(:fetch_token).and_return("test-token")
+        allow(fetcher).to receive(:fetch_token).and_return("test-token") # rubocop:disable RSpec/SubjectStub
 
         expect do
           fetcher.fetch(repo: repo, path: path, dest: dest)
@@ -83,13 +82,13 @@ RSpec.describe Develoz::CanonicalFetcher do
       end
     end
 
-    context "with missing token" do
+    context "with missing token" do # rubocop:disable RSpec/MultipleMemoizedHelpers
       it "makes request without Authorization header when token is nil" do
         stub_request(:get, api_url)
           .with { |request| request.headers["Authorization"].nil? }
           .to_return(status: 200, body: response_body)
 
-        allow(fetcher).to receive(:fetch_token).and_return(nil)
+        allow(fetcher).to receive(:fetch_token).and_return(nil) # rubocop:disable RSpec/SubjectStub
 
         fetcher.fetch(repo: repo, path: path, dest: dest)
 
@@ -97,13 +96,13 @@ RSpec.describe Develoz::CanonicalFetcher do
       end
     end
 
-    context "with token from environment" do
+    context "with token from environment" do # rubocop:disable RSpec/MultipleMemoizedHelpers
       it "uses token in Authorization header" do
         stub_request(:get, api_url)
           .with(headers: { "Authorization" => "token test-token" })
           .to_return(status: 200, body: response_body)
 
-        allow(fetcher).to receive(:fetch_token).and_return("test-token")
+        allow(fetcher).to receive(:fetch_token).and_return("test-token") # rubocop:disable RSpec/SubjectStub
 
         fetcher.fetch(repo: repo, path: path, dest: dest)
 
@@ -111,14 +110,14 @@ RSpec.describe Develoz::CanonicalFetcher do
       end
     end
 
-    context "with multiline content" do
+    context "with multiline content" do # rubocop:disable RSpec/MultipleMemoizedHelpers
       let(:file_content) { "Line 1\nLine 2\nLine 3\n" }
 
       it "preserves newlines" do
         stub_request(:get, api_url)
           .to_return(status: 200, body: response_body)
 
-        allow(fetcher).to receive(:fetch_token).and_return("test-token")
+        allow(fetcher).to receive(:fetch_token).and_return("test-token") # rubocop:disable RSpec/SubjectStub
 
         fetcher.fetch(repo: repo, path: path, dest: dest)
 
@@ -127,7 +126,7 @@ RSpec.describe Develoz::CanonicalFetcher do
     end
   end
 
-  describe "#fetch_token" do
+  describe "#fetch_token" do # rubocop:disable RSpec/MultipleMemoizedHelpers
     it "returns ENV['GH_TOKEN'] when set" do
       allow(ENV).to receive(:[]).and_call_original
       allow(ENV).to receive(:[]).with("GH_TOKEN").and_return("env-token")
@@ -150,7 +149,7 @@ RSpec.describe Develoz::CanonicalFetcher do
       allow(ENV).to receive(:[]).and_call_original
       allow(ENV).to receive(:[]).with("GH_TOKEN").and_return(nil)
 
-      allow_any_instance_of(described_class).to receive(:shell_token).and_return(nil)
+      allow_any_instance_of(described_class).to receive(:shell_token).and_return(nil) # rubocop:disable RSpec/AnyInstance
 
       token = fetcher.send(:fetch_token)
 
@@ -158,7 +157,7 @@ RSpec.describe Develoz::CanonicalFetcher do
     end
   end
 
-  describe "#shell_token rescue" do
+  describe "#shell_token rescue" do # rubocop:disable RSpec/MultipleMemoizedHelpers
     it "returns nil when shell command raises error" do
       new_fetcher = described_class.new
       allow(new_fetcher).to receive(:`).and_raise(StandardError, "command failed")
@@ -169,4 +168,3 @@ RSpec.describe Develoz::CanonicalFetcher do
     end
   end
 end
-# rubocop:enable RSpec/MultipleMemoizedHelpers, RSpec/SubjectStub, RSpec/AnyInstance

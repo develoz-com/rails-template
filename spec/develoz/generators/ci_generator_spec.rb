@@ -17,6 +17,7 @@ RSpec.describe Develoz::Generators::CiGenerator do
     gen.add_ci_gems
     gen.create_ci_entrypoint
     gen.create_ci_config
+    gen.create_rakefile
     gen.create_rubocop_config
     gen.create_reek_config
     gen.create_biome_config
@@ -113,6 +114,15 @@ RSpec.describe Develoz::Generators::CiGenerator do
       ci_config = File.read(File.join(tmp, "config/ci.rb"))
       expect(ci_config).to include("CI.run do")
       expect(ci_config).to include("step \"Setup\"")
+    end
+  end
+
+  it "generates Rakefile" do
+    with_tmp_dir do |tmp|
+      run_gen(tmp)
+      rakefile = File.read(File.join(tmp, "Rakefile"))
+      expect(rakefile).to include("require_relative 'config/application'")
+      expect(rakefile).to include("Rails.application.load_tasks")
     end
   end
 

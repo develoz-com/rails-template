@@ -2,7 +2,11 @@
 
 require "spec_helper"
 require "tmpdir"
+require "generators/develoz/admin/admin_generator"
+require "generators/develoz/db_backup/db_backup_generator"
+require "generators/develoz/frontend_core/frontend_core_generator"
 require "generators/develoz/install/install_generator"
+require "generators/develoz/kamal/kamal_generator"
 
 RSpec.describe Develoz::Generators::InstallGenerator do
   def with_tmp_dir
@@ -19,6 +23,11 @@ RSpec.describe Develoz::Generators::InstallGenerator do
     gen = described_class.new([], opts, destination_root: tmp)
     gen.install
     gen
+  end
+
+  def expect_generator_options(generator_class, destination_root, expected_options)
+    expect(generator_class).to have_received(:new)
+      .with([], hash_including(expected_options), destination_root: destination_root)
   end
 
   it "binds destination_root" do
@@ -50,10 +59,43 @@ RSpec.describe Develoz::Generators::InstallGenerator do
     end
   end
 
+  it "forwards resolved options to option-aware generators" do
+    with_tmp_dir do |tmp|
+      generators = [Develoz::Generators::FrontendCoreGenerator, Develoz::Generators::AdminGenerator,
+                    Develoz::Generators::KamalGenerator, Develoz::Generators::DbBackupGenerator]
+      generators.each { |generator| allow(generator).to receive(:new).and_call_original }
+      run_install(tmp, skip_pagy: true, admin: true, ui: true, kamal: true,
+                       push: true, docker: true, db_backup: true)
+
+      aggregate_failures do
+        expect_generator_options(Develoz::Generators::FrontendCoreGenerator, tmp, skip_pagy: true)
+        expect_generator_options(Develoz::Generators::AdminGenerator, tmp, ui: true)
+        expect_generator_options(Develoz::Generators::KamalGenerator, tmp, push: true)
+        expect_generator_options(Develoz::Generators::DbBackupGenerator, tmp, docker: true)
+      end
+    end
+  end
+
   it "warns when a generator is not yet available" do
     with_tmp_dir do |tmp|
       gen = described_class.new([], {}, destination_root: tmp)
-      expect { gen.send(:invoke_generator, "nonexistent") }.to output(/not yet available/).to_stdout
+      expect { gen.send(:invoke_generator, "nonexistent", {}) }.to output(/not yet available/).to_stdout
+    end
+  end
+
+  it "warns when the generator file does not define the expected class" do
+    with_tmp_dir do |tmp|
+      gen = described_class.new([], {}, destination_root: tmp)
+      allow(gen).to receive(:require).and_return(true)
+      expect { gen.send(:invoke_generator, "missing", {}) }.to output(/not yet available/).to_stdout
+    end
+  end
+
+  it "reraises unrelated name errors while loading a generator" do
+    with_tmp_dir do |tmp|
+      gen = described_class.new([], {}, destination_root: tmp)
+      allow(gen).to receive(:require).and_raise(NameError.new("unexpected", :UnexpectedConstant))
+      expect { gen.send(:invoke_generator, "missing", {}) }.to raise_error(NameError, /unexpected/)
     end
   end
 end

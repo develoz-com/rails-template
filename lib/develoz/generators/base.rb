@@ -23,19 +23,16 @@ module Develoz
 
         file_content = File.read(file_path)
 
-        # Check if marker is present (idempotency guard)
         if marker && file_content.include?(marker)
           say "#{into}: marker '#{marker}' already present, skipping", :green
           return
         end
 
-        # Check if content is already present (idempotency guard)
         if file_content.include?(content)
           say "#{into}: content already present, skipping", :green
           return
         end
 
-        # Inject using Rails primitive
         if after
           inject_into_file(into, "#{content}\n", after: after)
         elsif before
@@ -51,13 +48,11 @@ module Develoz
 
         gemfile_content = File.read(file_path)
 
-        # Check if gem is already declared (idempotency guard)
         if gemfile_content.match?(/^\s*gem\s+["']#{Regexp.escape(name)}["']/)
           say "Gemfile: gem '#{name}' already present, skipping", :green
           return
         end
 
-        # Use Rails primitive to add gem
         gem(name, version, group: group, **)
       end
 
@@ -67,13 +62,11 @@ module Develoz
 
         routes_content = File.read(file_path)
 
-        # Check if route is already present (idempotency guard)
         if routes_content.include?(route_line)
           say "config/routes.rb: route already present, skipping", :green
           return
         end
 
-        # Find the draw block and insert before the closing 'end'
         inject_into_file("config/routes.rb", "  #{route_line}\n", before: /^end\s*$/)
       end
 
@@ -81,7 +74,6 @@ module Develoz
         env_file = File.join(destination_root, ".env")
         env_example_file = File.join(destination_root, ".env.example")
 
-        # Append to .env if it exists
         if File.exist?(env_file)
           env_content = File.read(env_file)
           if env_content.include?("#{key}=")
@@ -91,7 +83,6 @@ module Develoz
           end
         end
 
-        # Append to .env.example if it exists and example: true
         return unless example && File.exist?(env_example_file)
 
         example_content = File.read(env_example_file)
@@ -108,13 +99,11 @@ module Develoz
 
         gitignore_content = File.read(file_path)
 
-        # Check if pattern is already present (idempotency guard)
         if gitignore_content.include?(pattern)
           say ".gitignore: pattern '#{pattern}' already present, skipping", :green
           return
         end
 
-        # Append pattern
         append_to_file(".gitignore", "#{pattern}\n")
       end
 

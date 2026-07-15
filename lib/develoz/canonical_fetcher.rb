@@ -35,7 +35,8 @@ module Develoz
 
     def shell_token
       `gh auth token 2>/dev/null`.strip
-    rescue StandardError
+    rescue StandardError => e
+      warn "Unable to retrieve GitHub token: #{e.message}"
       nil
     end
 

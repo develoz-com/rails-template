@@ -26,6 +26,10 @@ module Develoz
         template "config/ci.rb.tt", "config/ci.rb"
       end
 
+      def create_rakefile
+        template "Rakefile.tt", "Rakefile"
+      end
+
       def create_rubocop_config
         template ".rubocop.yml.tt", ".rubocop.yml"
       end

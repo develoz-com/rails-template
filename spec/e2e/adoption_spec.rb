@@ -16,8 +16,7 @@ require "generators/develoz/frontend_core/frontend_core_generator"
 require "generators/develoz/docs_render/docs_render_generator"
 require "generators/develoz/agents_docs/agents_docs_generator"
 
-# rubocop:disable RSpec/DescribeClass
-RSpec.describe "core generator adoption", :e2e do
+RSpec.describe "core generator adoption", :e2e do # rubocop:disable RSpec/DescribeClass
   let(:destination_root) { Dir.mktmpdir("develoz-existing-app") }
 
   before do
@@ -121,4 +120,3 @@ RSpec.describe "core generator adoption", :e2e do
     expect(file_digests).to eq(first_run)
   end
 end
-# rubocop:enable RSpec/DescribeClass

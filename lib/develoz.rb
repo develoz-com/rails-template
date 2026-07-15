@@ -9,3 +9,7 @@ require_relative "develoz/version"
 Dir[File.expand_path("develoz/**/*.rb", __dir__)].each do |file|
   require file unless file.end_with?("version.rb")
 end
+
+Dir[File.expand_path("generators/develoz/**/*.rb", __dir__)].each do |file|
+  require file
+end

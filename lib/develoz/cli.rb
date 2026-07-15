@@ -39,7 +39,7 @@ module Develoz
       resolved = resolve_flags
       resolver = Develoz::VersionResolver.new
       versions = resolver.resolve(ruby: options[:ruby], rails: options[:rails])
-      run_rails_new(app_name)
+      run_rails_new(app_name, versions[:rails])
       write_version_files(app_name, versions, resolver)
       invoke_install(app_name, resolved)
       puts "Created #{app_name} with Develoz Rails template."
@@ -62,8 +62,8 @@ module Develoz
       @prompt ||= TTY::Prompt.new
     end
 
-    def run_rails_new(app_name)
-      return if system("rails", "new", app_name, *RAILS_NEW_SKIPS)
+    def run_rails_new(app_name, rails_version)
+      return if system("rails", "new", app_name, "--rails-version=#{rails_version}", *RAILS_NEW_SKIPS)
 
       raise "Failed to generate Rails app: #{app_name}"
     end

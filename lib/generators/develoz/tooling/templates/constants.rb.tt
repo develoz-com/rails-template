@@ -1,11 +1,17 @@
 # frozen_string_literal: true
 
+## Assign all environment variables used by the Rails app to constants for easy access and tracking
 module Constants
-  def self.fetch_required(key)
-    ENV.fetch(key) { raise "Missing required environment variable: #{key}" }
-  end
-
-  APP_NAME = ENV.fetch("APP_NAME", "<%= app_name %>")
-
+  DATABASE_HOST = ENV.fetch('DATABASE_HOST', 'localhost')
+  DATABASE_PORT = ENV.fetch('DATABASE_PORT', 5432)
+  DATABASE_NAME = ENV.fetch('DATABASE_NAME', '<%= app_name %>')
+  TEST_DATABASE_NAME = ENV.fetch('TEST_DATABASE_NAME', "#{DATABASE_NAME}_test")
+  REDIS_URL = ENV.fetch('REDIS_URL', "redis://localhost:6379/#{ENV.fetch('TEST_ENV_NUMBER', 1)}")
+  RAILS_MAX_THREADS = ENV.fetch('RAILS_MAX_THREADS', `nproc || echo 2`.strip.to_i * 5)
+  SERVER_PORT = ENV.fetch('SERVER_PORT', 3000)
+  HOST = ENV.fetch('APP_HOST') { ENV.fetch('HOST', "localhost:#{SERVER_PORT}") }
+  CACHING_DEV = ENV.fetch('CACHING_DEV', nil) == 'true' # Enable caching in development if set to "true"
+  MEMCACHIER_SERVERS = ENV.fetch('MEMCACHIER_SERVERS', '').split(',')
+  APP_NAME = ENV.fetch('APP_NAME', '<%= app_class %>')
   # additional constants appended by generators
 end

@@ -121,11 +121,11 @@ RSpec.describe Develoz::Generators::ToolingGenerator do
     end
   end
 
-  it "generates constants module with fetch_required method" do
+  it "generates constants module with direct ENV.fetch declarations" do
     with_tmp_dir do |tmp|
       run_gen(tmp)
       constants = File.read(File.join(tmp, "config/initializers/constants.rb"))
-      expect(constants).to include("def self.fetch_required(key)")
+      expect(constants).to include("APP_NAME = ENV.fetch('APP_NAME',")
       expect(constants).to include("APP_NAME")
       expect(constants).to include("# additional constants appended by generators")
     end

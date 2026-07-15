@@ -266,7 +266,7 @@ RSpec.describe Develoz::Generators::DockerGenerator do
     with_tmp_dir do |tmp|
       run_gen(tmp)
       content = File.read(File.join(tmp, "bin/run"))
-      expect(content).to start_with("#!/usr/bin/env bash")
+      expect(content).to start_with("#!/bin/bash")
     end
   end
 
@@ -283,7 +283,8 @@ RSpec.describe Develoz::Generators::DockerGenerator do
       run_gen(tmp)
       content = File.read(File.join(tmp, "bin/run"))
       expect(content).to include("docker compose ps")
-      expect(content).to include("run_in_docker")
+      expect(content).to include("docker_accessible")
+      expect(content).to include("container_running")
     end
   end
 
@@ -291,7 +292,7 @@ RSpec.describe Develoz::Generators::DockerGenerator do
     with_tmp_dir do |tmp|
       run_gen(tmp)
       content = File.read(File.join(tmp, "bin/run"))
-      expect(content).to include("docker compose exec app")
+      expect(content).to include('run_with_docker "$service" exec -- "${args[@]}"')
     end
   end
 

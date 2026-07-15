@@ -18,6 +18,13 @@ RSpec.describe "DocsRenderFidelity" do
     expect(rendered).to match_canonical("#{fixture_base}/app/models/document.rb")
   end
 
+  it "docs_controller.rb matches canonical fixture with the generic parent substitution" do
+    rendered = render_template("#{template_base}/app/controllers/docs_controller.rb.tt")
+    canonicalized = rendered.sub("ApplicationController", "AdminController")
+
+    expect(canonicalized).to match_canonical("#{fixture_base}/app/controllers/docs_controller.rb")
+  end
+
   it "docs.js matches canonical fixture" do
     rendered = render_template("#{template_base}/app/javascript/docs.js.tt")
 

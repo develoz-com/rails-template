@@ -15,6 +15,7 @@ SimpleCov.start do
   command_name "RSpec_#{ENV['TEST_ENV_NUMBER']}" if ENV['TEST_ENV_NUMBER']
   use_merging true
   add_filter %w[/spec/ /config/ /db/]
+  add_filter %w[/bin/ *.sh]
 end
 
 RSpec.configure do |config|

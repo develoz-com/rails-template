@@ -1,0 +1,73 @@
+# Add your own tasks in files placed in lib/tasks ending in .rake,
+# for example lib/tasks/capistrano.rake, and they will automatically be available to Rake.
+
+require_relative 'config/application'
+
+Rails.application.load_tasks
+
+if Rails.env.development?
+  require 'rubocop/rake_task'
+  require 'haml_lint/rake_task'
+
+  namespace :lint do
+    RuboCop::RakeTask.new(:rubocop) do |task|
+      task.fail_on_error = true
+      task.options = %w[--parallel]
+    end
+
+    HamlLint::RakeTask.new(:haml)
+
+    desc 'Lint JavaScript/TypeScript with Biome'
+    task :biome do # rubocop:disable Rails/RakeEnvironment
+      sh 'yarn lint'
+    end
+
+    desc 'Lint CSS/SCSS with Stylelint'
+    task :stylelint do # rubocop:disable Rails/RakeEnvironment
+      sh 'yarn lint:css'
+    end
+
+    desc 'Lint Markdown with markdownlint'
+    task :markdownlint do # rubocop:disable Rails/RakeEnvironment
+      sh 'yarn lint:md'
+    end
+
+    desc 'Run Brakeman static security analysis'
+    task :brakeman do # rubocop:disable Rails/RakeEnvironment
+      sh 'bundle exec brakeman --quiet --no-pager --exit-on-warn'
+    end
+
+    desc 'Lint YAML with yamllint'
+    task :yamllint do # rubocop:disable Rails/RakeEnvironment
+      sh 'yamllint .'
+    end
+
+    desc 'Detect code smells with Reek'
+    task :reek do # rubocop:disable Rails/RakeEnvironment
+      sh 'bundle exec reek app lib'
+    end
+
+    desc 'Detect structural duplication with Flay'
+    task :flay do # rubocop:disable Rails/RakeEnvironment
+      # Mass 300 clears the existing by-design Filters:: DSL similarity (max ~272)
+      # while still catching new egregious duplication. Lower it as that debt is paid down.
+      output = `bundle exec flay --mass 300 app lib`
+      puts output
+      abort 'Flay detected structural duplication' unless output.include?('Total score (lower is better) = 0')
+    end
+  end
+
+  desc 'Run all linters (RuboCop, haml-lint, Biome, Stylelint, markdownlint, yamllint, Brakeman, Reek, Flay)'
+  task lint: %w[lint:rubocop lint:haml lint:biome lint:stylelint lint:markdownlint lint:yamllint
+                lint:brakeman lint:reek lint:flay]
+
+  namespace :docs do
+    desc 'Check platform-guide docs are in sync with their documented system specs'
+    task :check do # rubocop:disable Rails/RakeEnvironment
+      ruby 'bin/generate-docs --check'
+    end
+  end
+
+  Rake::Task[:default].clear if Rake::Task.task_defined?(:default)
+  task default: %w[lint spec:parallel docs:check]
+end

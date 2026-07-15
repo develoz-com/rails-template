@@ -48,20 +48,33 @@ module Develoz
 
     def fetch_ruby_version
       response = fetch_url(RUBY_VERSION_URL)
-      return RUBY_FALLBACK unless response
+      unless response
+        warn "Unable to fetch Ruby version; using fallback #{RUBY_FALLBACK}"
+        return RUBY_FALLBACK
+      end
 
       version = response.strip
-      version.empty? ? RUBY_FALLBACK : version
+      return version unless version.empty?
+
+      warn "Ruby version response was empty; using fallback #{RUBY_FALLBACK}"
+      RUBY_FALLBACK
     end
 
     def fetch_rails_version
       response = fetch_url(RAILS_VERSION_URL)
-      return RAILS_FALLBACK unless response
+      unless response
+        warn "Unable to fetch Rails version; using fallback #{RAILS_FALLBACK}"
+        return RAILS_FALLBACK
+      end
 
       data = JSON.parse(response)
       version = data["version"]
-      version.presence || RAILS_FALLBACK
-    rescue JSON::ParserError
+      return version if version.present?
+
+      warn "Rails version response was empty; using fallback #{RAILS_FALLBACK}"
+      RAILS_FALLBACK
+    rescue JSON::ParserError => e
+      warn "Unable to parse Rails version response (#{e.message}); using fallback #{RAILS_FALLBACK}"
       RAILS_FALLBACK
     end
 
@@ -78,8 +91,13 @@ module Develoz
       return response.body if response.is_a?(Net::HTTPSuccess)
 
       nil
-    rescue StandardError
+    rescue StandardError => e
+      warn_fetch_failure(url, e)
       nil
+    end
+
+    def warn_fetch_failure(url, error)
+      warn "Unable to fetch version from #{url} (#{error.message})"
     end
   end
 end

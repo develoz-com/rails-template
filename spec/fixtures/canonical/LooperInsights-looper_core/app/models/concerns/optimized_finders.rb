@@ -17,16 +17,11 @@
 module OptimizedFinders
   extend ActiveSupport::Concern
 
-  # Class methods for finding records
   module ClassMethods
-    # Find a single record matching the given attributes
-    # Optimized to use in-memory search when associations are loaded
     def find_for(**attributes)
       find_by(attributes)
     end
 
-    # Find multiple records matching the given attributes
-    # Optimized to use in-memory search when associations are loaded
     def for(**attributes)
       where(attributes)
     end
@@ -43,32 +38,24 @@ module OptimizedFinders
   # Module to prepend to ActiveRecord::Associations::CollectionProxy
   # This provides optimized implementations for loaded associations
   module CollectionProxyOptimizations
-    # Find a single record matching the given attributes
-    # Uses in-memory search if association is loaded or if any attribute is not a database column
     def find_for(**attributes)
       return super unless should_use_memory_search?(attributes)
 
       to_a.find { |record| match_attributes?(record, attributes) }
     end
 
-    # Find multiple records matching the given attributes
-    # Uses in-memory search if association is loaded or if any attribute is not a database column
     def for(**attributes)
       return super unless should_use_memory_search?(attributes)
 
       to_a.select { |record| match_attributes?(record, attributes) }
     end
 
-    # Find multiple records NOT matching the given attributes
-    # Uses in-memory search if association is loaded or if any attribute is not a database column
     def not_for(**attributes)
       return super unless should_use_memory_search?(attributes)
 
       to_a.reject { |record| match_attributes?(record, attributes) }
     end
 
-    # Extract column values from records, like pluck
-    # Uses in-memory search if association is loaded or if any attribute is not a database column
     def gather(*attributes)
       return pluck(*attributes) unless should_use_memory_search?(attributes)
       return to_a.map(&attributes.first) if attributes.size == 1

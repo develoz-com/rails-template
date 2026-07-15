@@ -5,10 +5,6 @@ class LowerCamelTransformer < Blueprinter::Transformer
     key.to_s.camelize(:lower)
   end
 
-  def transform_array(array)
-    array.map { |key| transform_key(key) }
-  end
-
   def transform(hash, _object = nil, _options = nil)
     hash.deep_transform_keys! { |key| transform_key(key).to_sym }
   end

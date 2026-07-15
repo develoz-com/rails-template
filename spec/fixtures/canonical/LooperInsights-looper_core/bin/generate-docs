@@ -2,7 +2,6 @@
 # frozen_string_literal: true
 
 require 'fileutils'
-require 'pathname'
 
 # Script to generate markdown documentation from system specs with doc comments
 #
@@ -40,7 +39,6 @@ class DocGenerator
 
   def initialize(spec_files = nil)
     @spec_files = spec_files || find_documented_specs
-    @project_root = Pathname.new(__dir__).join('..')
   end
 
   def generate(run_specs: true)

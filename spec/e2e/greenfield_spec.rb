@@ -15,17 +15,10 @@ require "tmpdir"
 #   bundle exec rspec --tag ~e2e            # skip e2e (fast CI)
 #   bundle exec rspec --tag e2e             # only e2e (nightly matrix)
 #
-# Note: the installed gem does not autoload `lib/generators/**` (the CLI never
-# requires the install generator), so the subprocess explicitly requires it
-# before invoking the CLI. This keeps the e2e spec self-contained without
-# patching source files outside this spec.
 RSpec.describe "develoz new (greenfield e2e)", :e2e, :slow do # rubocop:disable RSpec/DescribeClass
   let(:gem_root) { File.expand_path("../..", __dir__) }
   let(:lib_dir) { File.join(gem_root, "lib") }
 
-  # Build the Ruby one-liner that requires the gem + install generator, then
-  # invokes the CLI. Requiring the install generator explicitly works around
-  # the CLI not requiring `lib/generators/**` itself.
   def build_command(app_dir, flags)
     flag_args = flags.map(&:inspect).join(", ")
     inner = [

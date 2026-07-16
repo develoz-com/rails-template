@@ -17,9 +17,11 @@ module Develoz
       end
 
       def create_migrations
-        timestamp = Time.now.utc.strftime("%Y%m%d%H%M%S")
-        template "db/migrate/add_status_transitions.rb.tt", "db/migrate/#{timestamp}01_add_status_transitions.rb"
-        template "db/migrate/create_configurations.rb.tt", "db/migrate/#{timestamp}02_create_configurations.rb"
+        ts = Time.now.utc
+        template "db/migrate/add_status_transitions.rb.tt",
+                 "db/migrate/#{ts.strftime('%Y%m%d%H%M%S')}_add_status_transitions.rb"
+        template "db/migrate/create_configurations.rb.tt",
+                 "db/migrate/#{(ts + 1).strftime('%Y%m%d%H%M%S')}_create_configurations.rb"
       end
 
       def create_concern_specs

@@ -24,5 +24,5 @@ and this project adheres to
 - Canonical fixture fidelity tests and a full RSpec, coverage, and RuboCop CI
   workflow.
 
-[Unreleased]: https://github.com/develoz/develoz-rails/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/develoz/develoz-rails/releases/tag/v0.1.0
+[Unreleased]: https://github.com/develoz-com/rails-template/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/develoz-com/rails-template/releases/tag/v0.1.0

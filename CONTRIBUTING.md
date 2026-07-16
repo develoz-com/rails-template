@@ -95,3 +95,26 @@ To register and verify a new generator:
 6. Add canonical fixture and fidelity coverage when templates derive from an
    external source.
 7. Run `./bin/ci`.
+
+## Release process
+
+One-time setup uses RubyGems trusted publishing, so no token secret is needed:
+
+1. Create a GitHub environment named `rubygems` with no secrets.
+2. Add a pending trusted publisher for the `develoz-rails` gem on RubyGems with
+   owner `develoz-com`, repository `rails-template`, workflow `release.yml`, and
+   environment `rubygems`.
+
+For each release:
+
+1. Bump the version in `lib/develoz/version.rb` and add the user-facing changes
+   to the `Unreleased` section of `CHANGELOG.md`.
+2. Merge the changes and ensure CI is green.
+3. Publish a stable GitHub Release with tag `vX.Y.Z` at the current `main`
+   commit. Keep `main` unchanged until the release workflow finishes.
+4. Let the workflow validate the release, publish the gem, and finalize and
+   commit `CHANGELOG.md` to `main`.
+
+Prereleases aren't supported. Never move or recreate a published tag. If gem
+publication succeeds but changelog finalization fails, rerun the same failed
+workflow rather than creating another release.

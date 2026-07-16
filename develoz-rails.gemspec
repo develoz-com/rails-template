@@ -11,7 +11,7 @@ Gem::Specification.new do |spec|
   spec.summary = "Generate Rails 8.1 applications with Develoz conventions."
   spec.description = "Develoz Rails provides a CLI and composable generators for creating Rails 8.1 applications " \
                      "with a tested core stack and opt-in API, authentication, UI, deployment, and operations features."
-  spec.homepage = "https://github.com/develoz/develoz-rails"
+  spec.homepage = "https://github.com/develoz-com/rails-template"
   spec.required_ruby_version = ">= 3.4"
   spec.metadata["homepage_uri"] = spec.homepage
   spec.metadata["source_code_uri"] = "#{spec.homepage}/tree/v#{spec.version}"

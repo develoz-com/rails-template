@@ -77,7 +77,7 @@ describe Transitionable do
   end
 
   describe "integration with strict transitions" do
-    before { test_class.states(pending: %i[paid cancelled], paid: [], cancelled: []) }
+    before { test_class.states(pending: %i[paid], paid: %i[cancelled], cancelled: []) }
 
     it "uses the first declared state as default" do
       expect(test_class.create!.status).to eq("pending")

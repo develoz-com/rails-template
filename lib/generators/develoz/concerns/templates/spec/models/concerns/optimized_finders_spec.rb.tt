@@ -47,6 +47,11 @@ describe OptimizedFinders do
 
   let(:parent) { parent_class.create!(name: "parent") }
 
+  before do
+    parent_class
+    child_class
+  end
+
   describe ".find_for" do
     it "finds a record by single attribute" do
       record = child_class.create!(license: "buy", variant: "hd")

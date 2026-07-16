@@ -43,6 +43,9 @@ if [ -z "$APP_NAME" ]; then
   usage
 fi
 
+REPO_URL="${DEVELOZ_RAILS_REPO:-https://github.com/develoz-com/rails-template.git}"
+REPO_REF="${DEVELOZ_RAILS_REF:-main}"
+
 if ! command -v ruby &>/dev/null; then
   echo "Error: ruby is not installed."
   echo "Install Ruby 3.4+ (or 4.0+) via asdf, rbenv, or your system package manager."
@@ -54,13 +57,29 @@ if ! command -v gem &>/dev/null; then
   exit 1
 fi
 
+if ! command -v git &>/dev/null; then
+  echo "Error: git is not installed."
+  exit 1
+fi
+
 if ! command -v rails &>/dev/null; then
   echo "rails not found — installing rails..."
   gem install rails --no-document
 fi
 
-echo "Installing develoz-rails gem..."
-gem install develoz-rails --no-document
+CLONE_DIR="$(mktemp -d)"
+cleanup() { rm -rf "$CLONE_DIR"; }
+trap cleanup EXIT
+
+echo "Fetching develoz-rails ($REPO_REF)..."
+git clone --depth 1 --branch "$REPO_REF" "$REPO_URL" "$CLONE_DIR" &>/dev/null
+
+echo "Building and installing develoz-rails gem..."
+(
+  cd "$CLONE_DIR"
+  gem build develoz-rails.gemspec &>/dev/null
+  gem install ./develoz-rails-*.gem --no-document &>/dev/null
+)
 
 echo ""
 echo "Generating Rails app: $APP_NAME"

@@ -28,7 +28,7 @@ describe "Example Documentation" do
   end
 
   it "displays the homepage" do
-    expect(page).to have_http_status(:ok)
+    expect(page).to have_css("body")
 
     # === Homepage Screenshot
     #

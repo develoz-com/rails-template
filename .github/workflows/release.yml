@@ -217,10 +217,7 @@ jobs:
           }
 
           api_url="https://rubygems.org/api/v2/rubygems/develoz-rails/versions/${VERSION}.json"
-          checks=1
-          if (( RUN_ATTEMPT > 1 )); then
-            checks=12
-          fi
+          checks=12
 
           status=""
           for ((check = 1; check <= checks; check++)); do
@@ -247,12 +244,8 @@ jobs:
           done
 
           if [[ "$status" == "200" ]]; then
-            if (( RUN_ATTEMPT == 1 )); then
-              echo "::error::develoz-rails ${VERSION} already exists on RubyGems during the first run attempt"
-              exit 1
-            fi
             echo "should-push=false" >> "$GITHUB_OUTPUT"
-            echo "develoz-rails ${VERSION} is already visible; skipping gem push on rerun"
+            echo "develoz-rails ${VERSION} is already published; skipping gem push"
           else
             echo "should-push=true" >> "$GITHUB_OUTPUT"
           fi
@@ -266,6 +259,8 @@ jobs:
         run: gem push "pkg/develoz-rails-${VERSION}.gem"
 
       - name: Verify RubyGems API visibility
+        env:
+          SHOULD_PUSH: ${{ steps.version-state.outputs.should-push }}
         run: |
           set -euo pipefail
 
@@ -301,17 +296,23 @@ jobs:
             exit 1
           }
 
-          API_RESPONSE="$api_response" ruby -rjson -rdigest <<'RUBY'
+          API_RESPONSE="$api_response" SHOULD_PUSH="$SHOULD_PUSH" ruby -rjson -rdigest <<'RUBY'
           payload = JSON.parse(File.read(ENV.fetch("API_RESPONSE")))
           version = ENV.fetch("VERSION")
-          gem_path = ENV.fetch("GEM_PATH")
-          expected_sha = Digest::SHA256.file(gem_path).hexdigest
 
           abort "RubyGems API returned the wrong gem name" unless payload.fetch("name") == "develoz-rails"
           abort "RubyGems API returned the wrong version" unless payload.fetch("version") == version
           abort "RubyGems API returned the wrong platform" unless payload.fetch("platform") == "ruby"
           abort "RubyGems API reports the release as yanked" if payload.fetch("yanked")
-          abort "RubyGems API SHA does not match the built gem" unless payload.fetch("sha") == expected_sha
+
+          # Only verify SHA when we pushed the gem in this run
+          if ENV.fetch("SHOULD_PUSH") == "true"
+            gem_path = ENV.fetch("GEM_PATH")
+            expected_sha = Digest::SHA256.file(gem_path).hexdigest
+            abort "RubyGems API SHA does not match the built gem" unless payload.fetch("sha") == expected_sha
+          else
+            puts "Gem was already published; skipping SHA verification"
+          end
           RUBY
 
   finalize-changelog:

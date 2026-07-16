@@ -102,21 +102,13 @@ RSpec.describe Develoz::Generators::FrontendCoreGenerator do
     end
   end
 
-  it "pagy initializer has backend extras" do
+  it "pagy initializer uses built-in pagination features" do
     with_tmp_dir do |tmp|
       run_gen(tmp)
       content = File.read(File.join(tmp, "config/initializers/pagy.rb"))
-      expect(content).to include('require "pagy/extras/arel"')
-      expect(content).to include('require "pagy/extras/array"')
-      expect(content).to include('require "pagy/extras/countless"')
-    end
-  end
-
-  it "pagy initializer has bootstrap extra" do
-    with_tmp_dir do |tmp|
-      run_gen(tmp)
-      content = File.read(File.join(tmp, "config/initializers/pagy.rb"))
-      expect(content).to include('require "pagy/extras/bootstrap"')
+      expect(content).not_to include("pagy/extras")
+      expect(content).to include("Pagy::OPTIONS[:limit] = 25")
+      expect(content).to include("Pagy::OPTIONS.freeze")
     end
   end
 

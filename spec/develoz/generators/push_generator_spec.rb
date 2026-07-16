@@ -30,6 +30,12 @@ RSpec.describe Develoz::Generators::PushGenerator do
     gen
   end
 
+  def migration_path(tmp_dir)
+    migrations = Dir.glob(File.join(tmp_dir, "db/migrate/*_create_push_subscriptions.rb"))
+    expect(migrations).not_to be_empty
+    migrations.first
+  end
+
   it "sets correct destination_root" do
     with_tmp_dir do |tmp|
       gen = run_gen(tmp)
@@ -95,14 +101,14 @@ RSpec.describe Develoz::Generators::PushGenerator do
   it "generates push subscriptions migration" do
     with_tmp_dir do |tmp|
       run_gen(tmp)
-      expect(File).to exist(File.join(tmp, "db/migrate/create_push_subscriptions.rb"))
+      expect(File).to exist(migration_path(tmp))
     end
   end
 
   it "migration creates push_subscriptions table" do
     with_tmp_dir do |tmp|
       run_gen(tmp)
-      content = File.read(File.join(tmp, "db/migrate/create_push_subscriptions.rb"))
+      content = File.read(migration_path(tmp))
       expect(content).to include("create_table :push_subscriptions")
     end
   end
@@ -110,7 +116,7 @@ RSpec.describe Develoz::Generators::PushGenerator do
   it "migration has endpoint column" do
     with_tmp_dir do |tmp|
       run_gen(tmp)
-      content = File.read(File.join(tmp, "db/migrate/create_push_subscriptions.rb"))
+      content = File.read(migration_path(tmp))
       expect(content).to include("t.string :endpoint")
     end
   end
@@ -118,7 +124,7 @@ RSpec.describe Develoz::Generators::PushGenerator do
   it "migration has p256dh column" do
     with_tmp_dir do |tmp|
       run_gen(tmp)
-      content = File.read(File.join(tmp, "db/migrate/create_push_subscriptions.rb"))
+      content = File.read(migration_path(tmp))
       expect(content).to include("t.string :p256dh")
     end
   end
@@ -126,7 +132,7 @@ RSpec.describe Develoz::Generators::PushGenerator do
   it "migration has auth column" do
     with_tmp_dir do |tmp|
       run_gen(tmp)
-      content = File.read(File.join(tmp, "db/migrate/create_push_subscriptions.rb"))
+      content = File.read(migration_path(tmp))
       expect(content).to include("t.string :auth")
     end
   end
@@ -134,7 +140,7 @@ RSpec.describe Develoz::Generators::PushGenerator do
   it "migration has user reference" do
     with_tmp_dir do |tmp|
       run_gen(tmp)
-      content = File.read(File.join(tmp, "db/migrate/create_push_subscriptions.rb"))
+      content = File.read(migration_path(tmp))
       expect(content).to include("t.references :user")
     end
   end
@@ -142,7 +148,7 @@ RSpec.describe Develoz::Generators::PushGenerator do
   it "migration has unique index on endpoint" do
     with_tmp_dir do |tmp|
       run_gen(tmp)
-      content = File.read(File.join(tmp, "db/migrate/create_push_subscriptions.rb"))
+      content = File.read(migration_path(tmp))
       expect(content).to include("add_index :push_subscriptions, :endpoint, unique: true")
     end
   end
@@ -150,7 +156,7 @@ RSpec.describe Develoz::Generators::PushGenerator do
   it "migration has frozen_string_literal" do
     with_tmp_dir do |tmp|
       run_gen(tmp)
-      content = File.read(File.join(tmp, "db/migrate/create_push_subscriptions.rb"))
+      content = File.read(migration_path(tmp))
       expect(content).to start_with("# frozen_string_literal: true")
     end
   end
@@ -363,9 +369,9 @@ RSpec.describe Develoz::Generators::PushGenerator do
   it "is idempotent for migration" do
     with_tmp_dir do |tmp|
       run_gen(tmp)
-      first = File.read(File.join(tmp, "db/migrate/create_push_subscriptions.rb"))
+      first = File.read(migration_path(tmp))
       run_gen(tmp)
-      second = File.read(File.join(tmp, "db/migrate/create_push_subscriptions.rb"))
+      second = File.read(migration_path(tmp))
       expect(first).to eq(second)
     end
   end

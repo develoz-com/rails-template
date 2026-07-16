@@ -21,6 +21,12 @@ RSpec.describe Develoz::Generators::ConcernsGenerator do
     gen
   end
 
+  def migration_path(tmp_dir, name)
+    migrations = Dir.glob(File.join(tmp_dir, "db/migrate/*_#{name}.rb"))
+    expect(migrations).not_to be_empty
+    migrations.first
+  end
+
   it "sets correct destination_root" do
     with_tmp_dir do |tmp|
       gen = run_gen(tmp)
@@ -59,14 +65,14 @@ RSpec.describe Develoz::Generators::ConcernsGenerator do
   it "generates add_status_transitions migration" do
     with_tmp_dir do |tmp|
       run_gen(tmp)
-      expect(File).to exist(File.join(tmp, "db/migrate/add_status_transitions.rb"))
+      expect(File).to exist(migration_path(tmp, "add_status_transitions"))
     end
   end
 
   it "add_status_transitions migration adds status column" do
     with_tmp_dir do |tmp|
       run_gen(tmp)
-      content = File.read(File.join(tmp, "db/migrate/add_status_transitions.rb"))
+      content = File.read(migration_path(tmp, "add_status_transitions"))
       expect(content).to include("add_column :records, :status, :string")
     end
   end
@@ -74,7 +80,7 @@ RSpec.describe Develoz::Generators::ConcernsGenerator do
   it "add_status_transitions migration adds status_transitions jsonb column" do
     with_tmp_dir do |tmp|
       run_gen(tmp)
-      content = File.read(File.join(tmp, "db/migrate/add_status_transitions.rb"))
+      content = File.read(migration_path(tmp, "add_status_transitions"))
       expect(content).to include("add_column :records, :status_transitions, :jsonb")
     end
   end
@@ -82,14 +88,14 @@ RSpec.describe Develoz::Generators::ConcernsGenerator do
   it "generates create_configurations migration" do
     with_tmp_dir do |tmp|
       run_gen(tmp)
-      expect(File).to exist(File.join(tmp, "db/migrate/create_configurations.rb"))
+      expect(File).to exist(migration_path(tmp, "create_configurations"))
     end
   end
 
   it "create_configurations migration creates configurations table" do
     with_tmp_dir do |tmp|
       run_gen(tmp)
-      content = File.read(File.join(tmp, "db/migrate/create_configurations.rb"))
+      content = File.read(migration_path(tmp, "create_configurations"))
       expect(content).to include("create_table :configurations")
     end
   end
@@ -97,7 +103,7 @@ RSpec.describe Develoz::Generators::ConcernsGenerator do
   it "create_configurations migration uses uuid primary key" do
     with_tmp_dir do |tmp|
       run_gen(tmp)
-      content = File.read(File.join(tmp, "db/migrate/create_configurations.rb"))
+      content = File.read(migration_path(tmp, "create_configurations"))
       expect(content).to include("id: :uuid")
     end
   end
@@ -105,7 +111,7 @@ RSpec.describe Develoz::Generators::ConcernsGenerator do
   it "create_configurations migration includes polymorphic columns" do
     with_tmp_dir do |tmp|
       run_gen(tmp)
-      content = File.read(File.join(tmp, "db/migrate/create_configurations.rb"))
+      content = File.read(migration_path(tmp, "create_configurations"))
       expect(content).to include("configurable_type")
       expect(content).to include("configurable_id")
     end
@@ -177,9 +183,9 @@ RSpec.describe Develoz::Generators::ConcernsGenerator do
   it "is idempotent for migrations" do
     with_tmp_dir do |tmp|
       run_gen(tmp)
-      first = File.read(File.join(tmp, "db/migrate/create_configurations.rb"))
+      first = File.read(migration_path(tmp, "create_configurations"))
       run_gen(tmp)
-      second = File.read(File.join(tmp, "db/migrate/create_configurations.rb"))
+      second = File.read(migration_path(tmp, "create_configurations"))
       expect(first).to eq(second)
     end
   end

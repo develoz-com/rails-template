@@ -22,6 +22,12 @@ RSpec.describe Develoz::Generators::DatabaseGenerator do
     gen
   end
 
+  def migration_path(tmp_dir)
+    migrations = Dir.glob(File.join(tmp_dir, "db/migrate/*_create_pg_extensions.rb"))
+    expect(migrations).not_to be_empty
+    migrations.first
+  end
+
   it "sets correct destination_root" do
     with_tmp_dir do |tmp|
       gen = run_gen(tmp)
@@ -171,7 +177,7 @@ RSpec.describe Develoz::Generators::DatabaseGenerator do
   it "generates the PostgreSQL extensions migration" do
     with_tmp_dir do |tmp|
       run_gen(tmp)
-      migration = File.read(File.join(tmp, "db/migrate/create_pg_extensions.rb"))
+      migration = File.read(migration_path(tmp))
       expect(migration).to include("class CreatePgExtensions < ActiveRecord::Migration[8.0]")
       aggregate_failures do
         expect(migration).to include("CREATE EXTENSION IF NOT EXISTS pg_trgm")

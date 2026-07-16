@@ -33,6 +33,12 @@ RSpec.describe Develoz::Generators::AuthGenerator do
     gen
   end
 
+  def migration_path(tmp_dir)
+    migrations = Dir.glob(File.join(tmp_dir, "db/migrate/*_create_users.rb"))
+    expect(migrations).not_to be_empty
+    migrations.first
+  end
+
   it "sets correct destination_root" do
     with_tmp_dir do |tmp|
       gen = run_gen(tmp)
@@ -285,14 +291,14 @@ RSpec.describe Develoz::Generators::AuthGenerator do
   it "generates users migration" do
     with_tmp_dir do |tmp|
       run_gen(tmp)
-      expect(File).to exist(File.join(tmp, "db/migrate/create_users.rb"))
+      expect(File).to exist(migration_path(tmp))
     end
   end
 
   it "migration has email column" do
     with_tmp_dir do |tmp|
       run_gen(tmp)
-      content = File.read(File.join(tmp, "db/migrate/create_users.rb"))
+      content = File.read(migration_path(tmp))
       expect(content).to include("t.string :email")
     end
   end
@@ -300,7 +306,7 @@ RSpec.describe Develoz::Generators::AuthGenerator do
   it "migration has password_digest column" do
     with_tmp_dir do |tmp|
       run_gen(tmp)
-      content = File.read(File.join(tmp, "db/migrate/create_users.rb"))
+      content = File.read(migration_path(tmp))
       expect(content).to include("t.string :password_digest")
     end
   end
@@ -308,7 +314,7 @@ RSpec.describe Develoz::Generators::AuthGenerator do
   it "migration has unique index on email" do
     with_tmp_dir do |tmp|
       run_gen(tmp)
-      content = File.read(File.join(tmp, "db/migrate/create_users.rb"))
+      content = File.read(migration_path(tmp))
       expect(content).to include("add_index :users, :email, unique: true")
     end
   end
@@ -316,7 +322,7 @@ RSpec.describe Develoz::Generators::AuthGenerator do
   it "migration has frozen_string_literal" do
     with_tmp_dir do |tmp|
       run_gen(tmp)
-      content = File.read(File.join(tmp, "db/migrate/create_users.rb"))
+      content = File.read(migration_path(tmp))
       expect(content).to start_with("# frozen_string_literal: true")
     end
   end
@@ -485,9 +491,9 @@ RSpec.describe Develoz::Generators::AuthGenerator do
   it "is idempotent for migration" do
     with_tmp_dir do |tmp|
       run_gen(tmp)
-      first = File.read(File.join(tmp, "db/migrate/create_users.rb"))
+      first = File.read(migration_path(tmp))
       run_gen(tmp)
-      second = File.read(File.join(tmp, "db/migrate/create_users.rb"))
+      second = File.read(migration_path(tmp))
       expect(first).to eq(second)
     end
   end

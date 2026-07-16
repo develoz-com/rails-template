@@ -57,8 +57,9 @@ module Develoz
       end
 
       def create_users_migration
+        timestamp = Time.now.utc.strftime("%Y%m%d%H%M%S")
         template "db/migrate/create_users.rb.tt",
-                 "db/migrate/create_users.rb"
+                 "db/migrate/#{timestamp}01_create_users.rb"
       end
 
       def insert_auth_routes

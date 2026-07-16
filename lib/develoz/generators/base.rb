@@ -129,6 +129,8 @@ module Develoz
 
         copy_file(name, destination)
       end
+
+      remove_task(*public_instance_methods(false))
     end
   end
 end

@@ -90,4 +90,12 @@ RSpec.describe Develoz::Generators::StrictLoadingGenerator do
       expect(first).to eq(second)
     end
   end
+
+  it "runs through the Rails generator entry point" do
+    with_tmp_dir do |tmp|
+      described_class.start([], destination_root: tmp)
+
+      expect(File).to exist(File.join(tmp, "config/initializers/strict_loading.rb"))
+    end
+  end
 end

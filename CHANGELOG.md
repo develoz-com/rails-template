@@ -8,6 +8,11 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Fixed
+
+- Prevented inherited generator helper methods from being executed as Thor
+  tasks when invoking generators through Rails.
+
 ## [0.1.0] - 2026-07-15
 
 ### Added

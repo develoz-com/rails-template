@@ -8,7 +8,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
       interval: 5s
@@ -41,7 +41,10 @@ services:
       mailcatcher:
         condition: service_started
     environment:
-      DATABASE_URL: ${DATABASE_URL:-postgres://postgres:postgres@postgres:5432/<%= app_name %>_development}
+      DATABASE_HOST: ${DATABASE_HOST:-postgres}
+      DATABASE_PORT: ${DATABASE_PORT:-5432}
+      DATABASE_USER: ${DATABASE_USER:-postgres}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD:-postgres}
       SELENIUM_URL: ${SELENIUM_URL:-http://selenium:4444/wd/hub}
       MAILCATCHER_URL: ${MAILCATCHER_URL:-http://mailcatcher:1080}
     ports:

@@ -108,14 +108,9 @@ RSpec.describe Develoz::Generators::DatabaseGenerator do
 
   it "database.yml includes DATABASE_URL pattern for production" do
     with_tmp_dir do |tmp|
-      ENV["DATABASE_URL"] = "postgres://user:pass@host:5432/db"
-      begin
-        run_gen(tmp)
-        db_yml = File.read(File.join(tmp, "config/database.yml"))
-        expect(db_yml).to include("postgres://user:pass@host:5432/db")
-      ensure
-        ENV.delete("DATABASE_URL")
-      end
+      run_gen(tmp)
+      db_yml = File.read(File.join(tmp, "config/database.yml"))
+      expect(db_yml).to include('ENV.fetch("DATABASE_URL"')
     end
   end
 

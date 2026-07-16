@@ -23,8 +23,10 @@ module Develoz
       end
 
       def create_pg_extensions_migration
-        timestamp = Time.now.utc.strftime("%Y%m%d%H%M%S")
-        template "db/migrate/create_pg_extensions.rb.tt", "db/migrate/#{timestamp}_create_pg_extensions.rb"
+        return if migration_exists?("create_pg_extensions")
+
+        template "db/migrate/create_pg_extensions.rb.tt",
+                 "db/migrate/#{next_migration_timestamp}_create_pg_extensions.rb"
       end
 
       def ensure_postgres_tool_version

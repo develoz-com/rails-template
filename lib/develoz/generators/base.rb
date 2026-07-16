@@ -5,6 +5,15 @@ require "rails/generators"
 module Develoz
   module Generators
     class Base < Rails::Generators::Base
+      cattr_accessor :migration_counter, default: 0
+
+      def self.next_migration_timestamp
+        self.migration_counter += 1
+        (Time.now.utc + migration_counter).strftime("%Y%m%d%H%M%S")
+      end
+
+      delegate :next_migration_timestamp, to: :class
+
       def self.source_root
         File.expand_path("../../../templates", __dir__)
       end
@@ -108,6 +117,10 @@ module Develoz
         end
 
         append_to_file(".gitignore", "#{pattern}\n")
+      end
+
+      def migration_exists?(name)
+        Dir.glob(File.join(destination_root, "db/migrate/*_#{name}.rb")).any?
       end
 
       def apply_template(name, destination)

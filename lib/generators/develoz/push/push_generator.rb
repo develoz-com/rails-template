@@ -30,9 +30,10 @@ module Develoz
       end
 
       def create_push_subscription_migration
-        timestamp = Time.now.utc.strftime("%Y%m%d%H%M%S")
+        return if migration_exists?("create_push_subscriptions")
+
         template "db/migrate/create_push_subscriptions.rb.tt",
-                 "db/migrate/#{timestamp}_create_push_subscriptions.rb"
+                 "db/migrate/#{next_migration_timestamp}_create_push_subscriptions.rb"
       end
 
       def create_push_notification_service

@@ -13,7 +13,7 @@ class CreateConfigurations < ActiveRecord::Migration[8.0]
       t.string :key, null: false, index: true
       t.jsonb :value, null: false, default: {}
       t.string :configurable_type
-      t.uuid :configurable_id
+      t.string :configurable_id
       t.boolean :active, default: true, null: false
 
       t.timestamps

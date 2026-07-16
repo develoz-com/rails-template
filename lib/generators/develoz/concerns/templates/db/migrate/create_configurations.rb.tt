@@ -7,6 +7,7 @@ class CreateConfigurations < ActiveRecord::Migration[8.0]
 
   def change
     enable_extension "pgcrypto" unless extension_enabled?("pgcrypto")
+    enable_extension "uuid-ossp" unless extension_enabled?("uuid-ossp")
 
     create_table :configurations, id: :uuid, default: "public.uuid_generate_v1()" do |t|
       t.string :key, null: false, index: true

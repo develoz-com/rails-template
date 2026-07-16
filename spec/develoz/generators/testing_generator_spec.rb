@@ -320,7 +320,7 @@ RSpec.describe Develoz::Generators::TestingGenerator do
     with_tmp_dir do |tmp|
       run_gen(tmp)
       rails_helper = File.read(File.join(tmp, "spec/rails_helper.rb"))
-      expect(rails_helper).to include("config.fixture_path")
+      expect(rails_helper).to include("config.fixture_paths")
     end
   end
 

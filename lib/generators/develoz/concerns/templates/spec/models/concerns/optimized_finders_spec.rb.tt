@@ -37,7 +37,7 @@ describe OptimizedFinders do
   let(:child_class) do
     stub_const("Child", Class.new(ApplicationRecord) do
       self.table_name = "children"
-      belongs_to :parent, class_name: "Parent"
+      belongs_to :parent, class_name: "Parent", optional: true
 
       def format
         variant&.upcase

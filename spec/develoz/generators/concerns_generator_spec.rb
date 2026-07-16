@@ -14,10 +14,19 @@ RSpec.describe Develoz::Generators::ConcernsGenerator do
   # rubocop:enable Style/ExplicitBlockArgument
 
   def run_gen(tmp_dir)
+    app_record_dir = File.join(tmp_dir, "app/models")
+    FileUtils.mkdir_p(app_record_dir)
+    File.write(File.join(app_record_dir, "application_record.rb"), <<~RUBY)
+      class ApplicationRecord < ActiveRecord::Base
+        primary_abstract_class
+      end
+    RUBY
+
     gen = described_class.new([], {}, destination_root: tmp_dir)
     gen.create_concerns
     gen.create_migrations
     gen.create_concern_specs
+    gen.inject_into_application_record
     gen
   end
 
@@ -59,6 +68,16 @@ RSpec.describe Develoz::Generators::ConcernsGenerator do
     with_tmp_dir do |tmp|
       run_gen(tmp)
       expect(File).to exist(File.join(tmp, "app/models/concerns/configurable.rb"))
+    end
+  end
+
+  it "injects concerns into ApplicationRecord" do
+    with_tmp_dir do |tmp|
+      run_gen(tmp)
+      content = File.read(File.join(tmp, "app/models/application_record.rb"))
+      expect(content).to include("extend SearchableConcern")
+      expect(content).to include("include Configurable")
+      expect(content).to include("include OptimizedFinders")
     end
   end
 

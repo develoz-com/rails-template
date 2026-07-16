@@ -33,6 +33,14 @@ module Develoz
         template "spec/models/concerns/transitionable_spec.rb.tt", "spec/models/concerns/transitionable_spec.rb"
         template "spec/models/concerns/configurable_spec.rb.tt", "spec/models/concerns/configurable_spec.rb"
       end
+
+      def inject_into_application_record
+        inject_once(
+          into: "app/models/application_record.rb",
+          content: "  extend SearchableConcern\n  include Configurable\n  include OptimizedFinders",
+          after: "primary_abstract_class"
+        )
+      end
     end
   end
 end

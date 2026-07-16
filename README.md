@@ -10,15 +10,24 @@ documentation tooling, CI configuration, and application versioning.
 
 ## Quickstart
 
-Install the gem and generate an application:
+Generate a Rails app in one step:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/develoz-com/rails-template/main/install | bash -s -- my_app
+```
+
+Or install the gem and run interactively:
 
 ```bash
 gem install develoz-rails
 develoz new my_app
 ```
 
-The interactive flow asks which optional features to include. For an
-unattended run, pass `--yes`; omitted opt-in features remain disabled:
+For an unattended run with specific features:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/develoz-com/rails-template/main/install | bash -s -- my_app --yes --auth --ui --docker
+```
 
 ```bash
 develoz new my_app --yes --auth --ui --docker

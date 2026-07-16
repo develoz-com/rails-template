@@ -1,0 +1,79 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+APP_NAME=""
+FLAGS=""
+YES_FLAG=""
+
+usage() {
+  cat <<EOF
+Usage: curl -fsSL https://raw.githubusercontent.com/develoz-com/rails-template/main/install | bash -s -- APP_NAME [FLAGS]
+
+Examples:
+  curl -fsSL https://raw.githubusercontent.com/develoz-com/rails-template/main/install | bash -s -- my_app
+  curl -fsSL https://raw.githubusercontent.com/develoz-com/rails-template/main/install | bash -s -- my_app --yes --auth --docker
+  curl -fsSL https://raw.githubusercontent.com/develoz-com/rails-template/main/install | bash -s -- my_app --yes --api --auth --ui --admin --pwa --push --docker --kamal --db-backup
+
+Flags are passed through to develoz new. Use --yes for non-interactive runs.
+EOF
+  exit 1
+}
+
+for arg in "$@"; do
+  case "$arg" in
+    --help|-h)
+      usage
+      ;;
+    --yes)
+      YES_FLAG="--yes"
+      ;;
+    *)
+      if [ -z "$APP_NAME" ]; then
+        APP_NAME="$arg"
+      else
+        FLAGS="$FLAGS $arg"
+      fi
+      ;;
+  esac
+done
+
+if [ -z "$APP_NAME" ]; then
+  echo "Error: APP_NAME is required."
+  echo
+  usage
+fi
+
+if ! command -v ruby &>/dev/null; then
+  echo "Error: ruby is not installed."
+  echo "Install Ruby 3.4+ (or 4.0+) via asdf, rbenv, or your system package manager."
+  exit 1
+fi
+
+if ! command -v gem &>/dev/null; then
+  echo "Error: gem is not installed."
+  exit 1
+fi
+
+if ! command -v rails &>/dev/null; then
+  echo "rails not found — installing rails..."
+  gem install rails --no-document
+fi
+
+echo "Installing develoz-rails gem..."
+gem install develoz-rails --no-document
+
+echo ""
+echo "Generating Rails app: $APP_NAME"
+echo "Flags: $YES_FLAG$FLAGS"
+echo ""
+
+develoz new "$APP_NAME" $YES_FLAG $FLAGS
+
+echo ""
+echo "Done! Created $APP_NAME with Develoz Rails template."
+echo ""
+echo "Next steps:"
+echo "  cd $APP_NAME"
+echo "  bundle install"
+echo "  bin/rails db:prepare"
+echo "  bin/rails server"

@@ -1,0 +1,104 @@
+# frozen_string_literal: true
+
+# == Schema Information
+#
+# Table name: configurations
+#
+#  id                :uuid             not null, primary key
+#  active            :boolean          default(TRUE), not null
+#  configurable_type :string
+#  key               :string           not null
+#  value             :jsonb            not null
+#  created_at        :datetime         not null
+#  updated_at        :datetime         not null
+#  configurable_id   :string
+#
+# Indexes
+#
+#  idx_on_key_configurable_type_configurable_id_4dc9784d18        (key,configurable_type,configurable_id) UNIQUE
+#  index_configurations_on_configurable_id                        (configurable_id)
+#  index_configurations_on_configurable_type_and_configurable_id  (configurable_type,configurable_id)
+#  index_configurations_on_key                                    (key)
+#
+class Configuration < ApplicationRecord
+  CONFIGURABLES = %w[ User Client Platform ClientPlatform ].freeze
+  FORM_CONFIGURABLES = %w[ User Client Platform ].freeze
+
+  attribute :yaml_value, :string
+
+  validates :key, presence: true
+  validates :key, uniqueness: { scope: %i[ configurable_type configurable_id ] }
+  validate :yaml_value_must_parse
+
+  scope :active, -> { where(active: true) }
+  scope :globals, -> { where(configurable_type: nil, configurable_id: nil) }
+  scope :individuals, -> { where("configurable_type IS NOT NULL AND configurable_id IS NOT NULL") }
+  scope :for_configurable, lambda { |configurable|
+    if configurable.is_a?(Hash)
+      configurable_type, configurable_id = configurable.values_at(:type, :id)
+    else
+      configurable_type = configurable&.class&.name
+      configurable_id = configurable&.id
+    end
+
+    where(configurable_type: configurable_type, configurable_id: configurable_id&.to_s)
+  }
+  scope :all_for, ->(configurable) { for_configurable(configurable).or(globals) }
+
+  normalizes :configurable_type, :configurable_id, with: ->(attribute) { attribute.presence&.to_s }
+
+  def self.global_value(path)
+    key, *nested = path.to_s.split(".")
+    value = globals.active.find_by(key: key)&.value
+    nested.inject(value) { |acc, segment| acc.is_a?(Hash) ? acc.with_indifferent_access[segment] : nil }
+  end
+
+  def self.feature_enabled?(path)
+    ActiveModel::Type::Boolean.new.cast(global_value(path)) == true
+  end
+
+  def json_value=(value)
+    self.value = JSON.parse(value) if value.present?
+  end
+
+  def json_value
+    return if value.nil?
+
+    JSON.pretty_generate(value, array_nl: "", indent: "", object_nl: "\n  ")
+  end
+
+  def yaml_value=(input)
+    super
+    self.value = YAML.safe_load(input) if input.present?
+  rescue Psych::SyntaxError
+    # Invalid YAML is kept as raw input and reported by yaml_value_must_parse.
+  end
+
+  def yaml_value
+    read_attribute(:yaml_value).presence || value_as_yaml
+  end
+
+  def configurable_display_name
+    return nil if configurable_id.blank?
+    return configurable_id if CONFIGURABLES.exclude?(configurable_type)
+
+    configurable_type.constantize.find_by(id: configurable_id)&.display_name || configurable_id
+  end
+
+  private
+
+  def value_as_yaml
+    return if value.nil?
+
+    value.to_yaml(line_width: -1).sub(/\A---\s*/, "")
+  end
+
+  def yaml_value_must_parse
+    raw_yaml = self[:yaml_value]
+    return if raw_yaml.blank?
+
+    YAML.safe_load(raw_yaml)
+  rescue Psych::SyntaxError => e
+    errors.add(:yaml_value, "is not valid YAML: #{e.message}")
+  end
+end

@@ -35,4 +35,12 @@ RSpec.describe "ConcernsFidelity" do
 
     expect(rendered).to match_canonical("#{fixture_base}/configurable.rb")
   end
+
+  it "configuration.rb matches canonical fixture" do
+    template_path = "lib/generators/develoz/concerns/templates/app/models/configuration.rb.tt"
+    fixture_path = "spec/fixtures/canonical/LooperInsights-looper_core/app/models/configuration.rb"
+    rendered = render_template(template_path)
+
+    expect(rendered).to match_canonical(fixture_path)
+  end
 end

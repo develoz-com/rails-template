@@ -68,6 +68,7 @@ RSpec.describe Develoz::Generators::ConcernsGenerator do
     with_tmp_dir do |tmp|
       run_gen(tmp)
       expect(File).to exist(File.join(tmp, "app/models/concerns/configurable.rb"))
+      expect(File).to exist(File.join(tmp, "app/models/configuration.rb"))
     end
   end
 

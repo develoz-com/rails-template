@@ -14,6 +14,7 @@ module Develoz
         template "app/models/concerns/optimized_finders.rb.tt", "app/models/concerns/optimized_finders.rb"
         template "app/models/concerns/transitionable.rb.tt", "app/models/concerns/transitionable.rb"
         template "app/models/concerns/configurable.rb.tt", "app/models/concerns/configurable.rb"
+        template "app/models/configuration.rb.tt", "app/models/configuration.rb"
       end
 
       def create_migrations
@@ -38,7 +39,7 @@ module Develoz
         inject_once(
           into: "app/models/application_record.rb",
           content: "  extend SearchableConcern\n  include Configurable\n  include OptimizedFinders",
-          after: "primary_abstract_class"
+          after: "primary_abstract_class\n"
         )
       end
     end

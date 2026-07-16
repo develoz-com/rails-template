@@ -73,11 +73,11 @@ RSpec.describe Develoz::Generators::StrictLoadingGenerator do
     end
   end
 
-  it "configures strict_loading_violation" do
+  it "configures action_on_strict_loading_violation" do
     with_tmp_dir do |tmp|
       run_gen(tmp)
       content = File.read(File.join(tmp, "config/initializers/strict_loading.rb"))
-      expect(content).to include("strict_loading_violation")
+      expect(content).to include("action_on_strict_loading_violation")
     end
   end
 

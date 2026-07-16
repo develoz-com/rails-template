@@ -10,7 +10,7 @@ require "selenium-webdriver"
 Dir[Rails.root.join("spec/support/**/*.rb")].sort.each { |f| require f }
 
 RSpec.configure do |config|
-  config.fixture_paths = ["#{::Rails.root}/spec/fixtures"]
+  config.fixture_paths = [ "#{::Rails.root}/spec/fixtures" ]
   config.use_transactional_fixtures = true
   config.infer_spec_type_from_file_location!
   config.filter_rails_from_backtrace!
@@ -26,7 +26,7 @@ end
 
 Capybara.javascript_driver = :headless_chrome
 
-FactoryBot.definition_file_paths = [File.expand_path("factories", __dir__)]
+FactoryBot.definition_file_paths = [ File.expand_path("factories", __dir__) ]
 FactoryBot.find_definitions
 
 ActiveRecord::Migration.maintain_test_schema!

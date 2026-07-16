@@ -125,7 +125,7 @@ RSpec.describe Develoz::Generators::ToolingGenerator do
     with_tmp_dir do |tmp|
       run_gen(tmp)
       constants = File.read(File.join(tmp, "config/initializers/constants.rb"))
-      expect(constants).to include("APP_NAME = ENV.fetch('APP_NAME',")
+      expect(constants).to include('APP_NAME = ENV.fetch("APP_NAME",')
       expect(constants).to include("APP_NAME")
       expect(constants).to include("# additional constants appended by generators")
     end

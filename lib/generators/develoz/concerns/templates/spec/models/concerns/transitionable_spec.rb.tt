@@ -92,7 +92,7 @@ describe Transitionable do
 
     it "does not record an initial transition when status_transitions is pre-populated" do
       record = test_class.create!(
-        status_transitions: [{ "to_state" => "pending", "created_at" => "2024-01-01T00:00:00.000000Z" }]
+        status_transitions: [ { "to_state" => "pending", "created_at" => "2024-01-01T00:00:00.000000Z" } ]
       )
 
       expect(record.status_transitions.length).to eq(1)

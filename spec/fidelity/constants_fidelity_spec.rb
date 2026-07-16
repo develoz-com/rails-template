@@ -27,8 +27,8 @@ RSpec.describe "ConstantsFidelity" do
             .sub("  # additional constants appended by generators\n", "")
             .delete_suffix("end\n")
             .gsub(/^  /, "")
-            .sub("'sample_app'", "'core'")
-            .sub("'SampleApp'", "'Webstores'")
+            .sub('"sample_app"', '"core"')
+            .sub('"SampleApp"', '"Webstores"')
   end
 
   it "preserves the canonical ENV-backed constants mechanism with illustrative values" do

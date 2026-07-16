@@ -5,7 +5,7 @@ class Document
 
   class RecordNotFound < StandardError; end
 
-  FOLDER_INDEX_NAMES = ['README', '00 - Index'].freeze
+  FOLDER_INDEX_NAMES = [ "README", "00 - Index" ].freeze
 
   class Renderer < Redcarpet::Render::HTML
     include ActionView::Helpers::TagHelper
@@ -15,11 +15,11 @@ class Document
     WIKILINK = /\[\[([^\]#|]+)(?:#([^\]|]+))?(?:\|([^\]]+))?\]\]/
     CALLOUT = /\A<p>\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\](?:<br>\s*)?/i
     CALLOUT_ICONS = {
-      'note' => 'info-circle',
-      'tip' => 'lightbulb-o',
-      'important' => 'exclamation-circle',
-      'warning' => 'warning',
-      'caution' => 'ban'
+      "note" => "info-circle",
+      "tip" => "lightbulb-o",
+      "important" => "exclamation-circle",
+      "warning" => "warning",
+      "caution" => "ban"
     }.freeze
 
     def self.render(path, base_dir: nil)
@@ -60,18 +60,18 @@ class Document
     def block_code(code, language)
       # Mermaid diagrams are rendered client-side: emit the raw source in a
       # <pre class="mermaid"> for mermaid.js, never syntax-highlighted.
-      return content_tag(:pre, code, class: 'mermaid') if language == 'mermaid'
+      return content_tag(:pre, code, class: "mermaid") if language == "mermaid"
 
       lexer = Rouge::Lexer.find_fancy(language.to_s, code) || Rouge::Lexers::PlainText.new
       formatter = Rouge::Formatters::HTMLInline.new(Rouge::Themes::Github.mode(:dark).new)
       code = formatter.format(lexer.lex(code))
-      content_tag(:pre, class: 'code-block') do
+      content_tag(:pre, class: "code-block") do
         content_tag(:code, sanitize(code), class: "language-#{lexer.tag}")
       end
     end
 
     def image(link, title, alt_text)
-      tag(:img, src: link, alt: alt_text, title:, class: 'img-responsive')
+      tag(:img, src: link, alt: alt_text, title:, class: "img-responsive")
     end
 
     def block_quote(quote)
@@ -79,7 +79,7 @@ class Document
 
       if callout
         type = callout[1].downcase
-        quote = quote.sub(CALLOUT, '<p>')
+        quote = quote.sub(CALLOUT, "<p>")
         icon = tag.i(class: "fa fa-#{CALLOUT_ICONS.fetch(type)}", aria: { hidden: true })
         callout_title = %(<p class="callout-title">#{icon} #{type.titleize}</p>)
 
@@ -95,7 +95,7 @@ class Document
       in_fence = false
 
       document.each_line.map do |line|
-        if line.start_with?('```')
+        if line.start_with?("```")
           in_fence = !in_fence
           line
         elsif in_fence
@@ -108,7 +108,7 @@ class Document
 
     def replace_wikilinks_in_line(line)
       line.split(/(`[^`]*`)/).map do |part|
-        if part.start_with?('`')
+        if part.start_with?("`")
           part
         else
           part.gsub(WIKILINK) do
@@ -132,7 +132,7 @@ class Document
     end
 
     def wikilink_url(name, heading)
-      segments = [@base_dir, name].compact_blank
+      segments = [ @base_dir, name ].compact_blank
       url = "/docs/#{segments.map { |segment| ERB::Util.url_encode(segment) }.join('/')}"
       url += "##{heading_anchor(heading)}" if heading
       url
@@ -141,7 +141,7 @@ class Document
     # Mirror Redcarpet's with_toc_data anchor generation for [[Note#Heading]]:
     # drop non-alphanumerics (underscores included), then collapse whitespace to "-".
     def heading_anchor(heading)
-      heading.strip.downcase.gsub(/[^a-z0-9\s]/, '').gsub(/\s+/, '-').gsub(/\A-+|-+\z/, '')
+      heading.strip.downcase.gsub(/[^a-z0-9\s]/, "").gsub(/\s+/, "-").gsub(/\A-+|-+\z/, "")
     end
   end
 
@@ -149,8 +149,8 @@ class Document
 
   class << self
     def where(folder: nil, name: nil)
-      glob = folder ? "docs/#{folder}/" : '{docs/**/,}'
-      Rails.root.glob("#{glob}#{name || '*'}.md").sort.map { |path| new(path) }
+      glob = folder ? "docs/#{folder}/" : "{docs/**/,}"
+      Rails.root.glob("#{glob}#{name || "*"}.md").sort.map { |path| new(path) }
     end
 
     alias all where
@@ -170,11 +170,11 @@ class Document
     @path = path
     relative_path = Pathname(path).relative_path_from(Rails.root).to_s
     @id = relative_path.match(%r{\A(?:docs/)?(?<id>.*)\.md\z})&.[](:id)
-    @name = File.basename(path, '.md')
+    @name = File.basename(path, ".md")
   end
 
   def render
-    Renderer.render(path, base_dir: File.dirname(id).then { |dir| dir == '.' ? nil : dir })
+    Renderer.render(path, base_dir: File.dirname(id).then { |dir| dir == "." ? nil : dir })
   end
 
   def title
@@ -182,7 +182,7 @@ class Document
   end
 
   def breadcrumbs
-    parts = id.split('/')
+    parts = id.split("/")
 
     parts.each_with_index.map { |part, i| { name: part.titleize, path: "/docs/#{parts[0..i].join('/')}" } }
   end

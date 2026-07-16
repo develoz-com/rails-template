@@ -67,18 +67,18 @@ module Transitionable
 
   def parse_states(positional, kwargs)
     if kwargs.any?
-      raise ArgumentError, 'states accepts either a transitions hash or a list of states, not both' if positional.any?
+      raise ArgumentError, "states accepts either a transitions hash or a list of states, not both" if positional.any?
 
       transitions_map = freeze_transitions(kwargs)
-      [transitions_map.keys.map(&:to_s), transitions_map]
+      [ transitions_map.keys.map(&:to_s), transitions_map ]
     elsif positional.length == 1 && positional.first.is_a?(Hash)
       transitions_map = freeze_transitions(positional.first)
-      [transitions_map.keys.map(&:to_s), transitions_map]
+      [ transitions_map.keys.map(&:to_s), transitions_map ]
     else
       list = positional.flatten.map(&:to_s).freeze
-      raise ArgumentError, 'states requires at least one state' if list.empty?
+      raise ArgumentError, "states requires at least one state" if list.empty?
 
-      [list, nil]
+      [ list, nil ]
     end
   end
 
@@ -104,17 +104,17 @@ module Transitionable
 
       record = status_transitions.last
       Transitionable::StateTransition.new(
-        to_state: record['to_state'],
-        metadata: record['metadata'] || {},
-        created_at: record['created_at']
+        to_state: record["to_state"],
+        metadata: record["metadata"] || {},
+        created_at: record["created_at"]
       )
     end
 
     def status_times
       status_transitions.each_with_object([]) do |entry, acc|
-        time = Time.zone.parse(entry['created_at'].to_s)
+        time = Time.zone.parse(entry["created_at"].to_s)
         previous_time = acc.last&.[](:time) || created_at
-        acc << { status: entry['to_state'], previous_time:, time:, duration: time - previous_time }
+        acc << { status: entry["to_state"], previous_time:, time:, duration: time - previous_time }
       end
     end
 
@@ -135,9 +135,9 @@ module Transitionable
     end
 
     def record_status_transition
-      record = { 'to_state' => status.to_s, 'created_at' => Time.current.iso8601(6) }
-      record['metadata'] = transition_metadata.to_h.deep_stringify_keys if transition_metadata.present?
-      self.status_transitions = Array(status_transitions) + [record]
+      record = { "to_state" => status.to_s, "created_at" => Time.current.iso8601(6) }
+      record["metadata"] = transition_metadata.to_h.deep_stringify_keys if transition_metadata.present?
+      self.status_transitions = Array(status_transitions) + [ record ]
       self.transition_metadata = nil
     end
   end

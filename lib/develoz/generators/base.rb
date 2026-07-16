@@ -54,6 +54,9 @@ module Develoz
         end
 
         gem(name, version, group: group, **)
+        gemfile = File.read(file_path)
+        formatted_gemfile = gemfile.gsub(/group: \[([^\]\n]+)\]/, 'group: [ \1 ]')
+        File.write(file_path, formatted_gemfile) if formatted_gemfile != gemfile
       end
 
       def insert_route(route_line)

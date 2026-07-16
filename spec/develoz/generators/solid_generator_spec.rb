@@ -158,13 +158,13 @@ RSpec.describe Develoz::Generators::SolidGenerator do
     end
   end
 
-  it "generates mission_control initializer with correct structure" do
+  it "generates mission_control initializer with HTTP basic auth disabled" do
     with_tmp_dir do |tmp|
       run_gen(tmp)
       mc_init = File.read(File.join(tmp, "config/initializers/mission_control.rb"))
-      expect(mc_init).to include("MissionControl::Jobs.http_basic_auth_user")
-      expect(mc_init).to include("MissionControl::Jobs.http_basic_auth_password")
-      expect(mc_init).to include("ENV.fetch")
+      expect(mc_init).to include("MissionControl::Jobs.http_basic_auth_enabled = false")
+      expect(mc_init).not_to include("http_basic_auth_user")
+      expect(mc_init).not_to include("http_basic_auth_password")
     end
   end
 

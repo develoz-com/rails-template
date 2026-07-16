@@ -17,6 +17,7 @@ RSpec.describe Develoz::Generators::DatabaseGenerator do
     gen.add_database_gems
     gen.create_database_config
     gen.create_pg_search_initializer
+    gen.create_pg_extensions_migration
     gen.ensure_postgres_tool_version
     gen
   end
@@ -164,6 +165,20 @@ RSpec.describe Develoz::Generators::DatabaseGenerator do
       run_gen(tmp)
       pg_init = File.read(File.join(tmp, "config/initializers/pg_search.rb"))
       expect(pg_init).to include("searchable")
+    end
+  end
+
+  it "generates the PostgreSQL extensions migration" do
+    with_tmp_dir do |tmp|
+      run_gen(tmp)
+      migration = File.read(File.join(tmp, "db/migrate/create_pg_extensions.rb"))
+      expect(migration).to include("class CreatePgExtensions < ActiveRecord::Migration[8.0]")
+      aggregate_failures do
+        expect(migration).to include("CREATE EXTENSION IF NOT EXISTS pg_trgm")
+        expect(migration).to include("CREATE EXTENSION IF NOT EXISTS unaccent")
+        expect(migration).to include("DROP EXTENSION IF EXISTS unaccent")
+        expect(migration).to include("DROP EXTENSION IF EXISTS pg_trgm")
+      end
     end
   end
 

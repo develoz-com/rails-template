@@ -22,6 +22,10 @@ module Develoz
         template "config/initializers/pg_search.rb.tt", "config/initializers/pg_search.rb"
       end
 
+      def create_pg_extensions_migration
+        template "db/migrate/create_pg_extensions.rb.tt", "db/migrate/create_pg_extensions.rb"
+      end
+
       def ensure_postgres_tool_version
         tool_versions = ".tool-versions"
         path = File.join(destination_root, tool_versions)

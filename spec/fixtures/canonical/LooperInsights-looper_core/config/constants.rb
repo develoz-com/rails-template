@@ -26,16 +26,16 @@ SMTP_ADDRESS = ENV.fetch('SMTP_ADDRESS', nil)
 UPLOAD_AUDIT_ARTWORKS = ENV.fetch('UPLOAD_AUDIT_ARTWORKS', nil) == 'true'
 
 # Database configuration
-DATABASE_HOST = ENV.fetch('DATABASE_HOST', 'localhost')
-DATABASE_PORT = ENV.fetch('DATABASE_PORT', 5432)
-DATABASE_NAME = ENV.fetch('DATABASE_NAME', 'core')
+DATABASE_HOST = ENV.fetch("DATABASE_HOST", "localhost")
+DATABASE_PORT = ENV.fetch("DATABASE_PORT", 5432)
+DATABASE_NAME = ENV.fetch("DATABASE_NAME", "core")
 DATABASE_USER = ENV.fetch('DATABASE_USER', 'core')
 DATABASE_PASSWORD = ENV.fetch('DATABASE_PASSWORD', 'core')
-TEST_DATABASE_NAME = ENV.fetch('TEST_DATABASE_NAME', "#{DATABASE_NAME}_test")
+TEST_DATABASE_NAME = ENV.fetch("TEST_DATABASE_NAME", "#{DATABASE_NAME}_test")
 
 # Redis configuration
 # Use different Redis databases for parallel test processes to avoid conflicts
-REDIS_URL = ENV.fetch('REDIS_URL', "redis://localhost:6379/#{ENV.fetch('TEST_ENV_NUMBER', 1)}")
+REDIS_URL = ENV.fetch("REDIS_URL", "redis://localhost:6379/#{ENV.fetch("TEST_ENV_NUMBER", 1)}")
 
 COGNITO_REGION = ENV.fetch('COGNITO_REGION', nil)
 COGNITO_USERPOOL_ID = ENV.fetch('COGNITO_USERPOOL_ID', nil)
@@ -48,9 +48,9 @@ SKIP_MIGRATIONS = ENV.fetch('SKIP_MIGRATIONS', nil) == 'true'
 
 # APP configuration
 RAILS_ENV = ENV.fetch('RAILS_ENV', nil)
-RAILS_MAX_THREADS = ENV.fetch('RAILS_MAX_THREADS', `nproc || echo 2`.strip.to_i * 5)
-SERVER_PORT = ENV.fetch('SERVER_PORT', 3000)
-HOST = ENV.fetch('APP_HOST') { ENV.fetch('HOST', "localhost:#{SERVER_PORT}") }
+RAILS_MAX_THREADS = ENV.fetch("RAILS_MAX_THREADS", `nproc || echo 2`.strip.to_i * 5)
+SERVER_PORT = ENV.fetch("SERVER_PORT", 3000)
+HOST = ENV.fetch("APP_HOST") { ENV.fetch("HOST", "localhost:#{SERVER_PORT}") }
 ENVIRONMENTS = {
   local: HOST,
   dev: 'admin.core.dev.looperinsights.com',
@@ -66,17 +66,17 @@ SESSION_EXPIRES_IN = ENV.fetch('SESSION_EXPIRES_IN', 86_400).to_i
 # want to log everything, set the level to "debug".
 RAILS_LOG_LEVEL = ENV.fetch('RAILS_LOG_LEVEL', 'info')
 
-CACHING_DEV = ENV.fetch('CACHING_DEV', nil) == 'true' # Enable caching in development if set to "true"
+CACHING_DEV = ENV.fetch("CACHING_DEV", nil) == "true" # Enable caching in development if set to "true"
 
 # Read counters from counter-cache
 COUNTER_CACHE_ENABLED = ENV.fetch('COUNTER_CACHE_ENABLED', false)
 
 # Memcached configuration
-MEMCACHIER_SERVERS = ENV.fetch('MEMCACHIER_SERVERS', '').split(',')
+MEMCACHIER_SERVERS = ENV.fetch("MEMCACHIER_SERVERS", "").split(",")
 MEMCACHIER_USERNAME = ENV.fetch('MEMCACHIER_USERNAME', nil)
 MEMCACHIER_PASSWORD = ENV.fetch('MEMCACHIER_PASSWORD', nil)
 
-APP_NAME = ENV.fetch('APP_NAME', 'Webstores')
+APP_NAME = ENV.fetch("APP_NAME", "Webstores")
 
 # Track released version
 APP_VERSION = File.read('VERSION').strip

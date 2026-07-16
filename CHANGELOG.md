@@ -8,6 +8,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-07-16
+
 ### Fixed
 
 - Prevented inherited generator helper methods from being executed as Thor
@@ -29,5 +31,6 @@ and this project adheres to
 - Canonical fixture fidelity tests and a full RSpec, coverage, and RuboCop CI
   workflow.
 
-[Unreleased]: https://github.com/develoz-com/rails-template/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/develoz-com/rails-template/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/develoz-com/rails-template/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/develoz-com/rails-template/releases/tag/v0.1.0

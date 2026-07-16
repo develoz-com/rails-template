@@ -175,11 +175,11 @@ RSpec.describe Develoz::Generators::TestingGenerator do
     end
   end
 
-  it "generates rails_helper with rails/rspec require" do
+  it "generates rails_helper with rspec/rails require" do
     with_tmp_dir do |tmp|
       run_gen(tmp)
       rails_helper = File.read(File.join(tmp, "spec/rails_helper.rb"))
-      expect(rails_helper).to include("require \"rails/rspec\"")
+      expect(rails_helper).to include("require \"rspec/rails\"")
     end
   end
 

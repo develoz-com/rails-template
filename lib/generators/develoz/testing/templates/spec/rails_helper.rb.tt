@@ -3,6 +3,9 @@
 require "spec_helper"
 require_relative "../config/environment"
 require "rspec/rails"
+require "factory_bot"
+require "capybara/rspec"
+require "selenium-webdriver"
 
 Dir[Rails.root.join("spec/support/**/*.rb")].sort.each { |f| require f }
 

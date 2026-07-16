@@ -15,6 +15,10 @@ module Develoz
           content: '  APP_VERSION = ENV.fetch("APP_VERSION", "dev")',
           after: "# additional constants appended by generators\n"
         )
+        inject_once(
+          into: "config/initializers/constants.rb",
+          content: "APP_VERSION = Constants::APP_VERSION"
+        )
       end
 
       def create_application_helper
@@ -34,6 +38,10 @@ module Develoz
       def create_app_version_partial
         template "app/views/shared/_app_version.html.erb.tt",
                  "app/views/shared/_app_version.html.erb"
+      end
+
+      def create_application_helper_spec
+        template "spec/helpers/application_helper_spec.rb.tt", "spec/helpers/application_helper_spec.rb"
       end
     end
   end

@@ -149,5 +149,52 @@ describe OptimizedFinders do
       found = parent.children.find_for(format: "HD")
       expect(found).to eq(record)
     end
+
+    it "filters loaded associations in memory, including array values" do
+      buy = child_class.create!(parent:, license: "buy", variant: "hd")
+      rent = child_class.create!(parent:, license: "rent", variant: "sd")
+      child_class.create!(parent:, license: "trial", variant: "hd")
+      parent.children.load
+
+      expect(parent.children.for(license: %w[buy rent])).to contain_exactly(buy, rent)
+    end
+
+    it "filters unloaded associations in the database" do
+      buy = child_class.create!(parent:, license: "buy", variant: "hd")
+      child_class.create!(parent:, license: "rent", variant: "sd")
+
+      expect(parent.children.for(license: "buy")).to contain_exactly(buy)
+    end
+
+    it "rejects matching records from loaded associations in memory" do
+      child_class.create!(parent:, license: "buy", variant: "hd")
+      rent = child_class.create!(parent:, license: "rent", variant: "sd")
+      parent.children.load
+
+      expect(parent.children.not_for(license: "buy")).to contain_exactly(rent)
+    end
+
+    it "rejects matching records from unloaded associations in the database" do
+      child_class.create!(parent:, license: "buy", variant: "hd")
+      rent = child_class.create!(parent:, license: "rent", variant: "sd")
+
+      expect(parent.children.not_for(license: "buy")).to contain_exactly(rent)
+    end
+
+    it "gathers one or multiple attributes from a loaded association" do
+      child_class.create!(parent:, license: "buy", variant: "hd")
+      child_class.create!(parent:, license: "rent", variant: "sd")
+      parent.children.load
+
+      expect(parent.children.gather(:license)).to contain_exactly("buy", "rent")
+      expect(parent.children.gather(:license, :variant)).to contain_exactly(%w[buy hd], %w[rent sd])
+    end
+
+    it "gathers attributes from an unloaded association in the database" do
+      child_class.create!(parent:, license: "buy", variant: "hd")
+      child_class.create!(parent:, license: "rent", variant: "sd")
+
+      expect(parent.children.gather(:license)).to contain_exactly("buy", "rent")
+    end
   end
 end

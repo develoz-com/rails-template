@@ -33,6 +33,7 @@ module Develoz
         template "spec/models/concerns/optimized_finders_spec.rb.tt", "spec/models/concerns/optimized_finders_spec.rb"
         template "spec/models/concerns/transitionable_spec.rb.tt", "spec/models/concerns/transitionable_spec.rb"
         template "spec/models/concerns/configurable_spec.rb.tt", "spec/models/concerns/configurable_spec.rb"
+        template "spec/models/configuration_spec.rb.tt", "spec/models/configuration_spec.rb"
       end
 
       def inject_into_application_record

@@ -165,6 +165,13 @@ RSpec.describe Develoz::Generators::ConcernsGenerator do
     end
   end
 
+  it "generates configuration_spec.rb" do
+    with_tmp_dir do |tmp|
+      run_gen(tmp)
+      expect(File).to exist(File.join(tmp, "spec/models/configuration_spec.rb"))
+    end
+  end
+
   it "searchable_concern_spec requires rails_helper" do
     with_tmp_dir do |tmp|
       run_gen(tmp)

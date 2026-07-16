@@ -1,0 +1,11 @@
+# frozen_string_literal: true
+
+require "rails_helper"
+
+RSpec.describe ApplicationHelper, type: :helper do
+  describe "#app_version" do
+    it "returns the APP_VERSION constant" do
+      expect(helper.app_version).to eq(APP_VERSION)
+    end
+  end
+end

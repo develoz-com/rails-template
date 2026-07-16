@@ -35,6 +35,7 @@ RSpec.describe Develoz::Generators::VersioningGenerator do
     gen.inject_app_version_constant
     gen.create_application_helper
     gen.create_app_version_partial
+    gen.create_application_helper_spec
     gen
   end
 
@@ -51,6 +52,7 @@ RSpec.describe Develoz::Generators::VersioningGenerator do
       run_gen(tmp)
       constants = File.read(File.join(tmp, "config/initializers/constants.rb"))
       expect(constants).to include('APP_VERSION = ENV.fetch("APP_VERSION", "dev")')
+      expect(constants).to include("APP_VERSION = Constants::APP_VERSION")
       expect(constants).to include("# additional constants appended by generators")
     end
   end
@@ -73,6 +75,7 @@ RSpec.describe Develoz::Generators::VersioningGenerator do
       run_gen(tmp)
       constants = File.read(File.join(tmp, "config/initializers/constants.rb"))
       expect(constants.scan('APP_VERSION = ENV.fetch("APP_VERSION", "dev")').size).to eq(1)
+      expect(constants.scan("APP_VERSION = Constants::APP_VERSION").size).to eq(1)
     end
   end
 
@@ -145,6 +148,14 @@ RSpec.describe Develoz::Generators::VersioningGenerator do
       run_gen(tmp)
       second = File.read(File.join(tmp, "app/helpers/application_helper.rb"))
       expect(first).to eq(second)
+    end
+  end
+
+  it "creates the application helper spec" do
+    with_tmp_dir do |tmp|
+      seed_constants(tmp)
+      run_gen(tmp)
+      expect(File).to exist(File.join(tmp, "spec/helpers/application_helper_spec.rb"))
     end
   end
 

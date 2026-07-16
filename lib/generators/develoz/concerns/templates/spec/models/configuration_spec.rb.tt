@@ -1,0 +1,223 @@
+# frozen_string_literal: true
+
+require "rails_helper"
+
+RSpec.describe Configuration, type: :model do
+  let(:configurable_class) { stub_const("ConfigurationTarget", Struct.new(:id)) }
+
+  describe "validations" do
+    it "requires a key" do
+      configuration = described_class.new(value: {})
+
+      expect(configuration).not_to be_valid
+      expect(configuration.errors[:key]).to include("can't be blank")
+    end
+
+    it "requires the key to be unique within its configurable" do
+      target = configurable_class.new(1)
+      described_class.create!(key: "feature", value: true,
+                              configurable_type: target.class.name, configurable_id: target.id)
+      duplicate = described_class.new(key: "feature", value: false,
+                                      configurable_type: target.class.name, configurable_id: target.id)
+
+      expect(duplicate).not_to be_valid
+      expect(duplicate.errors[:key]).to include("has already been taken")
+    end
+
+    it "allows the same key for a different configurable" do
+      described_class.create!(key: "feature", value: true,
+                              configurable_type: "ConfigurationTarget", configurable_id: 1)
+      configuration = described_class.new(key: "feature", value: false,
+                                          configurable_type: "ConfigurationTarget", configurable_id: 2)
+
+      expect(configuration).to be_valid
+    end
+  end
+
+  describe "scopes" do
+    it "returns active configurations" do
+      active = described_class.create!(key: "active", value: true)
+      described_class.create!(key: "inactive", value: true, active: false)
+
+      expect(described_class.active).to contain_exactly(active)
+    end
+
+    it "separates global and individual configurations" do
+      global = described_class.create!(key: "global", value: true)
+      individual = described_class.create!(key: "individual", value: true,
+                                           configurable_type: "ConfigurationTarget", configurable_id: 1)
+      described_class.create!(key: "partial", value: true, configurable_type: "ConfigurationTarget")
+
+      expect(described_class.globals).to contain_exactly(global)
+      expect(described_class.individuals).to contain_exactly(individual)
+    end
+
+    it "finds configurations for an object" do
+      target = configurable_class.new(7)
+      matching = described_class.create!(key: "matching", value: true,
+                                         configurable_type: target.class.name, configurable_id: target.id)
+      described_class.create!(key: "other", value: true,
+                              configurable_type: target.class.name, configurable_id: 8)
+
+      expect(described_class.for_configurable(target)).to contain_exactly(matching)
+    end
+
+    it "finds configurations for a type and id hash" do
+      matching = described_class.create!(key: "matching", value: true,
+                                         configurable_type: "ConfigurationTarget", configurable_id: 7)
+
+      expect(described_class.for_configurable(type: "ConfigurationTarget", id: 7)).to contain_exactly(matching)
+    end
+
+    it "treats nil as the global configurable" do
+      global = described_class.create!(key: "global", value: true)
+      described_class.create!(key: "individual", value: true,
+                              configurable_type: "ConfigurationTarget", configurable_id: 7)
+
+      expect(described_class.for_configurable(nil)).to contain_exactly(global)
+    end
+
+    it "combines scoped and global configurations" do
+      target = configurable_class.new(7)
+      global = described_class.create!(key: "global", value: true)
+      scoped = described_class.create!(key: "scoped", value: true,
+                                       configurable_type: target.class.name, configurable_id: target.id)
+      described_class.create!(key: "other", value: true,
+                              configurable_type: target.class.name, configurable_id: 8)
+
+      expect(described_class.all_for(target)).to contain_exactly(global, scoped)
+    end
+
+    it "normalizes blank configurable values to nil" do
+      configuration = described_class.create!(key: "global", value: true,
+                                              configurable_type: "", configurable_id: "")
+
+      expect(configuration).to have_attributes(configurable_type: nil, configurable_id: nil)
+    end
+  end
+
+  describe ".global_value" do
+    it "returns top-level and nested global values" do
+      value = { "nested" => { "enabled" => "true" }, "label" => "plain" }
+      described_class.create!(key: "features", value: value)
+
+      expect(described_class.global_value("features")).to eq(value)
+      expect(described_class.global_value("features.nested.enabled")).to eq("true")
+    end
+
+    it "returns nil for a missing key or a path through a scalar" do
+      described_class.create!(key: "features", value: { "label" => "plain" })
+
+      expect(described_class.global_value("missing.path")).to be_nil
+      expect(described_class.global_value("features.label.enabled")).to be_nil
+    end
+  end
+
+  describe ".feature_enabled?" do
+    it "casts the global value to a boolean" do
+      described_class.create!(key: "enabled_feature", value: "true")
+      described_class.create!(key: "disabled_feature", value: "false")
+
+      expect(described_class.feature_enabled?("enabled_feature")).to be(true)
+      expect(described_class.feature_enabled?("disabled_feature")).to be(false)
+    end
+  end
+
+  describe "#json_value" do
+    it "parses assigned JSON" do
+      configuration = described_class.new(key: "json", value: {})
+
+      configuration.json_value = '{"enabled":true}'
+
+      expect(configuration.value).to eq("enabled" => true)
+    end
+
+    it "ignores a blank assignment" do
+      configuration = described_class.new(key: "json", value: { "unchanged" => true })
+
+      configuration.json_value = ""
+
+      expect(configuration.value).to eq("unchanged" => true)
+    end
+
+    it "returns pretty JSON for a value" do
+      configuration = described_class.new(key: "json", value: { "enabled" => true })
+
+      expect(JSON.parse(configuration.json_value)).to eq("enabled" => true)
+    end
+
+    it "returns nil without a value" do
+      expect(described_class.new(key: "json", value: nil).json_value).to be_nil
+    end
+  end
+
+  describe "#yaml_value" do
+    it "parses and validates assigned YAML" do
+      configuration = described_class.new(key: "yaml", value: {})
+
+      configuration.yaml_value = "enabled: true\n"
+
+      expect(configuration).to be_valid
+      expect(configuration.value).to eq("enabled" => true)
+      expect(configuration.yaml_value).to eq("enabled: true\n")
+    end
+
+    it "ignores a blank assignment" do
+      configuration = described_class.new(key: "yaml", value: { "unchanged" => true })
+
+      configuration.yaml_value = ""
+
+      expect(configuration.value).to eq("unchanged" => true)
+    end
+
+    it "reports invalid YAML" do
+      configuration = described_class.new(key: "yaml", value: {})
+
+      configuration.yaml_value = "enabled: ["
+
+      expect(configuration).not_to be_valid
+      expect(configuration.errors[:yaml_value].first).to start_with("is not valid YAML:")
+    end
+
+    it "serializes the stored value when no raw YAML is present" do
+      configuration = described_class.new(key: "yaml", value: { "enabled" => true })
+
+      expect(YAML.safe_load(configuration.yaml_value)).to eq("enabled" => true)
+    end
+
+    it "returns nil without a stored or raw value" do
+      expect(described_class.new(key: "yaml", value: nil).yaml_value).to be_nil
+    end
+  end
+
+  describe "#configurable_display_name" do
+    it "returns nil without a configurable id" do
+      configuration = described_class.new(configurable_type: "User", configurable_id: nil)
+
+      expect(configuration.configurable_display_name).to be_nil
+    end
+
+    it "returns the id for an unsupported configurable type" do
+      configuration = described_class.new(configurable_type: "Other", configurable_id: "7")
+
+      expect(configuration.configurable_display_name).to eq("7")
+    end
+
+    it "returns the configurable display name when the record exists" do
+      display_record = Struct.new(:display_name).new("Ada Lovelace")
+      user_class = stub_const("User", Class.new)
+      user_class.define_singleton_method(:find_by) { |id:| id == "7" ? display_record : nil }
+      configuration = described_class.new(configurable_type: "User", configurable_id: "7")
+
+      expect(configuration.configurable_display_name).to eq("Ada Lovelace")
+    end
+
+    it "falls back to the id when the record does not exist" do
+      user_class = stub_const("User", Class.new)
+      user_class.define_singleton_method(:find_by) { |id:| nil }
+      configuration = described_class.new(configurable_type: "User", configurable_id: "missing")
+
+      expect(configuration.configurable_display_name).to eq("missing")
+    end
+  end
+end

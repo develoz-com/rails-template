@@ -10,6 +10,7 @@ describe Transitionable do
       create_table :transitionable_records, force: true do |t|
         t.string :status, default: "pending", null: false
         t.jsonb :status_transitions, default: [], null: false
+        t.timestamps
       end
     end
   end
@@ -151,6 +152,13 @@ describe Transitionable do
       expect(record.can_be_pending?).to be false
     end
 
+    it "returns false when the current state is nil" do
+      record = test_class.new(status: nil)
+      record.clear_changes_information
+
+      expect(record.can_be_paid?).to be false
+    end
+
     context "when in free mode (transitions is nil)" do
       before do
         test_class.states(%i[draft published])
@@ -182,6 +190,31 @@ describe Transitionable do
       expect(transition.to_state).to eq("paid")
       expect(transition.metadata).to eq({})
       expect(transition.created_at).to be_present
+    end
+  end
+
+  describe "#status_times" do
+    before { test_class.states(pending: %i[paid], paid: []) }
+
+    it "calculates the time spent between transitions" do
+      created_at = Time.zone.parse("2024-01-01T00:00:00Z")
+      pending_at = created_at + 1.minute
+      paid_at = pending_at + 2.minutes
+      record = test_class.create!(
+        created_at:,
+        status: "paid",
+        status_transitions: [
+          { "to_state" => "pending", "created_at" => pending_at.iso8601(6) },
+          { "to_state" => "paid", "created_at" => paid_at.iso8601(6) }
+        ]
+      )
+
+      expect(record.status_times).to eq(
+        [
+          { status: "pending", previous_time: created_at, time: pending_at, duration: 1.minute },
+          { status: "paid", previous_time: pending_at, time: paid_at, duration: 2.minutes }
+        ]
+      )
     end
   end
 

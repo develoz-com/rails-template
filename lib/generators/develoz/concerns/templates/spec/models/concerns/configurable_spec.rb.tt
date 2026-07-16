@@ -24,6 +24,7 @@ describe Configurable do
       configurable :highest_format_only, :boolean
       configurable :report_groups, :array
       configurable :feature_flags, :hash, global_fallback: true
+      configurable :page_size, default: 25
     end)
   end
 
@@ -83,6 +84,16 @@ describe Configurable do
 
       expect { record.update!(report_groups: nil) }
         .to change { record.configuration_for(:report_groups) }.to(nil)
+    end
+
+    it "returns the default while a nil assignment is pending" do
+      record.report_groups = nil
+
+      expect(record.report_groups).to eq([])
+    end
+
+    it "uses an explicit default" do
+      expect(record.page_size).to eq(25)
     end
   end
 

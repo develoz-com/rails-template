@@ -29,6 +29,10 @@ describe Configurable do
 
   let(:record) { test_class.create!(name: "test") }
 
+  before(:each) do
+    Configuration.destroy_all
+  end
+
   describe ".configurable with a boolean attribute" do
     it "casts an assigned value and exposes it through the predicate" do
       record.highest_format_only = "true"

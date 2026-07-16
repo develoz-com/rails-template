@@ -24,7 +24,7 @@ require "rails_helper"
 #
 describe "Example Documentation" do
   before do
-    visit root_path
+    visit "/docs"
   end
 
   it "displays the homepage" do

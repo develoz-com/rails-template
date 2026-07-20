@@ -20,7 +20,24 @@ RSpec.describe Develoz::Generators::FrontendCoreGenerator do
     gen.create_importmap_config
     gen.create_pagy_initializer
     gen.create_annotaterb_config
+    gen.create_annotaterb_task
     gen
+  end
+
+  it "generates lib/tasks/annotate_rb.rake" do
+    with_tmp_dir do |tmp|
+      run_gen(tmp)
+      expect(File).to exist(File.join(tmp, "lib/tasks/annotate_rb.rake"))
+    end
+  end
+
+  it "annotate_rb task loads annotate_rb rake tasks in development" do
+    with_tmp_dir do |tmp|
+      run_gen(tmp)
+      rake = File.read(File.join(tmp, "lib/tasks/annotate_rb.rake"))
+      expect(rake).to include("Rails.env.development?")
+      expect(rake).to include("AnnotateRb::Core.load_rake_tasks")
+    end
   end
 
   it "sets correct destination_root" do

@@ -22,7 +22,6 @@ RSpec.describe Develoz::Generators::DockerGenerator do
     gen.create_bin_dev
     gen.create_bin_setup
     gen.create_bin_docker_entrypoint
-    gen.create_bin_run
     gen.wire_env
     gen.ensure_env_gitignored
     gen
@@ -255,71 +254,6 @@ RSpec.describe Develoz::Generators::DockerGenerator do
     end
   end
 
-  it "generates bin/run" do
-    with_tmp_dir do |tmp|
-      run_gen(tmp)
-      expect(File).to exist(File.join(tmp, "bin/run"))
-    end
-  end
-
-  it "bin/run has shebang" do
-    with_tmp_dir do |tmp|
-      run_gen(tmp)
-      content = File.read(File.join(tmp, "bin/run"))
-      expect(content).to start_with("#!/bin/bash")
-    end
-  end
-
-  it "bin/run is executable" do
-    with_tmp_dir do |tmp|
-      run_gen(tmp)
-      mode = File.stat(File.join(tmp, "bin/run")).mode & 0o755
-      expect(mode).to eq(0o755)
-    end
-  end
-
-  it "bin/run detects docker compose" do
-    with_tmp_dir do |tmp|
-      run_gen(tmp)
-      content = File.read(File.join(tmp, "bin/run"))
-      expect(content).to include("docker compose ps")
-      expect(content).to include("docker_accessible")
-      expect(content).to include("container_running")
-    end
-  end
-
-  it "bin/run execs into container when docker is running" do
-    with_tmp_dir do |tmp|
-      run_gen(tmp)
-      content = File.read(File.join(tmp, "bin/run"))
-      expect(content).to include('run_with_docker "$service" exec -- "${args[@]}"')
-    end
-  end
-
-  it "bin/run falls back to local execution" do
-    with_tmp_dir do |tmp|
-      run_gen(tmp)
-      content = File.read(File.join(tmp, "bin/run"))
-      expect(content).to include("run_local")
-    end
-  end
-
-  it "bin/run is asdf-aware" do
-    with_tmp_dir do |tmp|
-      run_gen(tmp)
-      content = File.read(File.join(tmp, "bin/run"))
-      expect(content).to include("asdf")
-    end
-  end
-
-  it "bin/run is rbenv-aware" do
-    with_tmp_dir do |tmp|
-      run_gen(tmp)
-      content = File.read(File.join(tmp, "bin/run"))
-      expect(content).to include("rbenv")
-    end
-  end
-
   it "wires POSTGRES_USER into .env" do
     with_tmp_dir do |tmp|
       run_gen(tmp)
@@ -422,16 +356,6 @@ RSpec.describe Develoz::Generators::DockerGenerator do
       first = File.read(File.join(tmp, "bin/docker-entrypoint"))
       run_gen(tmp)
       second = File.read(File.join(tmp, "bin/docker-entrypoint"))
-      expect(first).to eq(second)
-    end
-  end
-
-  it "is idempotent for bin/run" do
-    with_tmp_dir do |tmp|
-      run_gen(tmp)
-      first = File.read(File.join(tmp, "bin/run"))
-      run_gen(tmp)
-      second = File.read(File.join(tmp, "bin/run"))
       expect(first).to eq(second)
     end
   end

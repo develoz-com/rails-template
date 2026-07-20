@@ -21,6 +21,11 @@ module Develoz
         ensure_gitignore(".env")
       end
 
+      def create_bin_run
+        template "bin/run.tt", "bin/run"
+        chmod "bin/run", 0o755
+      end
+
       def create_constants
         template "constants.rb.tt", "config/initializers/constants.rb"
       end

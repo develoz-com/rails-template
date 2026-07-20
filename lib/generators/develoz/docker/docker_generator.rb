@@ -32,11 +32,6 @@ module Develoz
         chmod "bin/docker-entrypoint", 0o755
       end
 
-      def create_bin_run
-        template "bin_run.tt", "bin/run"
-        chmod "bin/run", 0o755
-      end
-
       def wire_env
         append_env "POSTGRES_USER", "postgres"
         append_env "POSTGRES_PASSWORD", "postgres"

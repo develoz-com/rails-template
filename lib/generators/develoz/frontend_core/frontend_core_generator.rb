@@ -35,6 +35,10 @@ module Develoz
       def create_annotaterb_config
         template ".annotaterb.yml.tt", ".annotaterb.yml"
       end
+
+      def create_annotaterb_task
+        template "lib/tasks/annotate_rb.rake.tt", "lib/tasks/annotate_rb.rake"
+      end
     end
   end
 end

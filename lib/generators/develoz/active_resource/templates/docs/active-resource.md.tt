@@ -1,0 +1,66 @@
+# Active Resource
+
+## Overview
+
+Active Resource maps remote REST resources to Ruby objects. This feature adds a shared base class and an example resource so the application has one place to configure the remote API URL and request headers.
+
+## What It Adds
+
+- The `activeresource` gem in `Gemfile`.
+- `app/models/application_resource.rb`, which inherits from `ActiveResource::Base`.
+- `app/models/example_resource.rb`, an example subclass to rename or copy for each remote resource.
+- An `Accept: application/json` header on every resource that inherits from `ApplicationResource`.
+
+## Configuration
+
+Set these environment variables before the application loads:
+
+| Variable | Purpose |
+| --- | --- |
+| `ACTIVE_RESOURCE_SITE` | Base URL for the remote API. |
+| `ACTIVE_RESOURCE_AUTHORIZATION` | Complete value for the `Authorization` request header. |
+
+For local development, add values to `.env` if the application loads that file:
+
+```dotenv
+ACTIVE_RESOURCE_SITE=https://api.example.com
+ACTIVE_RESOURCE_AUTHORIZATION=Bearer replace-me
+```
+
+The generated class defaults both values to an empty string. Set real values in the runtime environment, and don't commit credentials.
+
+## Usage
+
+Rename `ExampleResource` or create another subclass of `ApplicationResource`:
+
+```ruby
+class CustomerResource < ApplicationResource
+  self.element_name = "customer"
+end
+```
+
+Use the resource through Active Resource's model interface. For example, open a Rails console and fetch a record exposed by the remote API:
+
+```bash
+bin/rails console
+```
+
+```ruby
+customer = CustomerResource.find(42)
+customer.attributes
+```
+
+Set `self.element_name` when the remote API's singular resource name doesn't match the class name.
+
+## Verification
+
+Install the added gem, then confirm the base class and environment-backed settings load:
+
+```bash
+bundle install
+ACTIVE_RESOURCE_SITE=https://api.example.com \
+  ACTIVE_RESOURCE_AUTHORIZATION='Bearer test-token' \
+  bin/rails runner 'puts [ApplicationResource.site.to_s, ApplicationResource.headers["Authorization"]]'
+```
+
+The command should print the configured site and authorization header. Test a real `find` call only against an API endpoint and credential that are safe to use.

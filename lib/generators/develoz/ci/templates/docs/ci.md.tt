@@ -1,0 +1,101 @@
+# Continuous Integration
+
+## Overview
+
+The CI generator creates one local and GitHub Actions entrypoint for style checks, security scans, RSpec, and
+coverage. It adds Ruby quality gems and configuration files for Ruby, JavaScript, CSS, Haml, Markdown, and YAML
+checks.
+
+Run it from the Rails application root:
+
+```bash
+rails g develoz:ci
+```
+
+## What It Adds
+
+- `rubocop-rails-omakase`, `reek`, `flay`, `brakeman`, `bundler-audit`, and `haml_lint` in the `development` and
+  `test` Gemfile groups. `haml_lint` has automatic requiring disabled.
+- `bin/ci`, a Ruby entrypoint using `ActiveSupport::ContinuousIntegration` and `config/ci.rb`.
+- `config/ci.rb` with setup, style, security, and RSpec steps.
+- A `Rakefile` that loads Rails tasks and, in development, defines individual `lint:*` tasks, an aggregate `lint`
+  task, `docs:check`, and a default task composed of `lint`, `spec:parallel`, and `docs:check`.
+- `.rubocop.yml` inheriting `rubocop-rails-omakase`, targeting Ruby 3.4, and allowing 120-character lines.
+- `.reek.yml`, `biome.json`, `.stylelintrc.json`, `.haml-lint.yml`, `.markdownlint.json`, and `.yamllint` with the
+  generated rule sets and exclusions.
+- `.github/workflows/ci.yml`, which runs `bin/ci` on `ubuntu-latest` for pushes and pull requests targeting `main`.
+  It uses `actions/checkout@v4` and `ruby/setup-ruby@v1` with Bundler caching.
+
+The CI steps run these commands:
+
+```text
+bin/setup --skip-server
+bin/rubocop
+bin/reek app lib
+bin/flay --mass 300 app lib
+yarn lint
+yarn lint:css
+bin/haml-lint app
+yarn lint:md
+yamllint .
+bin/bundler-audit
+bin/importmap audit
+bin/brakeman --quiet --no-pager --exit-on-warn --exit-on-error
+bundle exec rspec
+```
+
+## Configuration
+
+This generator doesn't install JavaScript packages, define Yarn scripts, install the `yamllint` executable,
+create `bin/importmap`, define `spec:parallel`, or create `bin/generate-docs`. Keep the corresponding CI and Rake
+steps only when those commands exist in the application. The testing and documentation generators provide some
+of these expected pieces.
+
+Review `.rubocop.yml` if the application doesn't run Ruby 3.4. Adjust the GitHub Actions branch filters if the
+default branch isn't `main`. The generated workflow runs on Linux, so commands must work on `ubuntu-latest`.
+
+SimpleCov, not `config/ci.rb`, enforces the documented 100 percent line and branch coverage gate. That setup comes
+from the testing generator.
+
+This generator has no feature-specific command-line options.
+
+## Usage
+
+Install the Ruby gems, provide the non-Ruby tools and scripts used by the retained steps, then run the same
+entrypoint used by GitHub Actions:
+
+```bash
+bundle install
+bin/ci
+```
+
+In development, run one check or the aggregate Rake task:
+
+```bash
+bundle exec rake lint:rubocop
+bundle exec rake lint
+```
+
+The default Rake task also runs `spec:parallel` and `docs:check` when those tasks are available.
+
+## Verification
+
+Run the complete pipeline locally:
+
+```bash
+bin/ci
+```
+
+Every configured step must exit successfully. Also list the generated Rake tasks and check that
+application-specific prerequisites are present:
+
+```bash
+bundle exec rake -T
+yarn lint
+yarn lint:css
+yarn lint:md
+yamllint .
+```
+
+Push a branch or open a pull request against `main` to confirm the `CI` workflow passes on the GitHub-hosted
+Ubuntu runner.

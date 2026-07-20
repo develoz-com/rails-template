@@ -1,0 +1,64 @@
+# Frontend Core
+
+## Overview
+
+The frontend core generator adds the shared Importmap configuration, model annotation settings, and Pagy pagination defaults used by other Develoz features. Pagy is included by default and can be omitted without skipping the Importmap or AnnotateRb setup.
+
+Run the default setup with:
+
+```bash
+rails g develoz:frontend_core
+bundle install
+```
+
+## What It Adds
+
+- The `importmap-rails` gem
+- The `annotaterb` gem in the development group
+- The `pagy` gem, unless `--skip-pagy` is used
+- `config/importmap.rb`
+- `.annotaterb.yml`
+- `config/initializers/pagy.rb`, unless `--skip-pagy` is used
+
+The Importmap file pins the application entry point, Turbo, Stimulus, Stimulus loading, Trix, Action Text, Active Storage, and all controllers under `app/javascript/controllers`.
+
+The AnnotateRb configuration annotates models after the class body, includes indexes and foreign keys, and excludes routes, tests, fixtures, factories, serializers, controllers, helpers, and scaffolds.
+
+## Configuration
+
+Pagy defaults to 25 records per page through `Pagy::OPTIONS[:limit]`. The options hash is then frozen, so change the generated initializer before adding any other Pagy defaults.
+
+To install the feature without Pagy, run:
+
+```bash
+rails g develoz:frontend_core --skip-pagy
+```
+
+With `--skip-pagy`, the generator does not add the `pagy` gem or `config/initializers/pagy.rb`. It still adds `importmap-rails`, development-only `annotaterb`, `config/importmap.rb`, and `.annotaterb.yml`.
+
+## Usage
+
+Use `config/importmap.rb` as the central list of browser module pins. Add another package with the Importmap command when a later feature needs it:
+
+```bash
+bin/importmap pin package-name
+```
+
+Run AnnotateRb through the commands supplied by the gem when model schema comments need to be refreshed. When Pagy is installed, use its controller and view APIs in the application; the generated initializer supplies only the default page size.
+
+## Verification
+
+Inspect the installed Importmap and dependency state:
+
+```bash
+bin/importmap json
+bundle check
+```
+
+If Pagy was included, boot Rails and confirm the configured limit:
+
+```bash
+bin/rails runner 'puts Pagy::OPTIONS[:limit]'
+```
+
+The expected value is `25`. For a `--skip-pagy` installation, confirm that neither the `pagy` Gemfile entry nor `config/initializers/pagy.rb` exists.

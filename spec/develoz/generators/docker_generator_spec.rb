@@ -348,7 +348,7 @@ RSpec.describe Develoz::Generators::DockerGenerator do
     with_tmp_dir do |tmp|
       run_gen(tmp)
       env = File.read(File.join(tmp, ".env"))
-      expect(env).to include("SELENIUM_URL=http://selenium:4444/wd/hub")
+      expect(env).to include("SELENIUM_URL=http://selenium:4444")
     end
   end
 

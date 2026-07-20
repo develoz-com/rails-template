@@ -1,0 +1,45 @@
+# UI Components
+
+## Overview
+
+The UI feature connects the private `develoz-ui` component library to the application. Development and test use a Git submodule, while production fetches the gem from GitHub.
+
+## What It Adds
+
+- `develoz_ui` in the development and test Gemfile group, loaded from `vendor/develoz-ui`.
+- `develoz_ui` in the production Gemfile group, loaded from `develoz-com/develoz-ui` on GitHub.
+- A `vendor/develoz-ui` entry in `.gitmodules`, using the SSH repository URL.
+- Executable setup script `bin/setup_develoz_ui`.
+- Importmap pins for `develoz-ui/index.js` and the Stimulus controllers under `develoz-ui/controllers`.
+
+This feature adds no routes, database tables, or environment variables.
+
+## Configuration
+
+Access to `git@github.com:develoz-com/develoz-ui.git` is required for the submodule and to install the production gem. Set up GitHub SSH access before running the script:
+
+```bash
+bin/setup_develoz_ui
+bundle install
+```
+
+The script runs `git submodule update --init --recursive vendor/develoz-ui` and exits with an error if the directory remains missing or empty. Clones and CI jobs must initialize submodules before Bundler resolves the development and test path dependency.
+
+## Usage
+
+Consult the checked-out library under `vendor/develoz-ui` for its current component helpers, previews, and controller identifiers. The generated Importmap entries make the package and its Stimulus controller files addressable, but they don't import or register those controllers in `app/javascript/application.js`.
+
+Import the package or selected controllers from the application's JavaScript entry point according to the library's own instructions. Render components through the `develoz_ui` gem APIs documented by the checked-out version.
+
+The Admin feature doesn't automatically render `develoz-ui` components. Its generated layout uses standalone inline CSS, even when both `--admin` and `--ui` are selected. Replace Admin markup with library components explicitly if the application wants a shared UI.
+
+## Verification
+
+```bash
+bin/setup_develoz_ui
+test -d vendor/develoz-ui
+bundle check
+bin/rails runner 'puts Gem.loaded_specs.fetch("develoz_ui").full_gem_path'
+```
+
+Confirm `config/importmap.rb` contains both `develoz-ui` pins. Then load a page that imports a library controller and check the browser console for missing module or Stimulus registration errors.

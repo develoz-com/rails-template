@@ -17,7 +17,7 @@ module Develoz
         say "develoz:push requires --pwa. Enabling PWA automatically.", :yellow
         require "generators/develoz/pwa/pwa_generator"
         pwa = PwaGenerator.new([], {}, destination_root: destination_root)
-        PwaGenerator.public_instance_methods(false).each { |m| pwa.public_send(m) }
+        pwa.invoke_all
       end
 
       def add_web_push_gem

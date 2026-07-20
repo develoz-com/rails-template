@@ -17,7 +17,7 @@ CI.run do
   step "Security: Importmap audit", "bin/importmap audit"
   step "Security: Brakeman", "bin/brakeman --quiet --no-pager --exit-on-warn --exit-on-error"
 
-  step "Tests: RSpec", "bundle exec rspec"
+  step "Tests: RSpec (parallel)", "bin/rails spec:parallel"
 
   # Coverage gate: enforced by SimpleCov in spec/spec_helper.rb (100% line + branch)
 end

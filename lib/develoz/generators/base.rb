@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "rails/generators"
+require_relative "feature_documentation"
 
 module Develoz
   module Generators
@@ -51,7 +52,7 @@ module Develoz
         end
       end
 
-      def add_gem(name, version = nil, group: nil, **)
+      def add_gem(name, version = nil, group: nil, **options)
         file_path = File.join(destination_root, "Gemfile")
         return unless File.exist?(file_path)
 
@@ -62,7 +63,28 @@ module Develoz
           return
         end
 
-        gem(name, version, group: group, **)
+        if group
+          regex = group_regex_for(group)
+          if regex
+            group_match = gemfile_content.match(regex)
+            if group_match
+              block_start_index = group_match.begin(0)
+              end_match = gemfile_content.match(/^end\b/, block_start_index)
+              if end_match
+                end_index = end_match.begin(0)
+                options_str = options.map { |k, v| "#{k}: #{v.inspect}" }.join(", ")
+                options_part = options_str.empty? ? "" : ", #{options_str}"
+                gem_line = version ? "  gem \"#{name}\", \"#{version}\"#{options_part}\n" : "  gem \"#{name}\"#{options_part}\n"
+                gemfile_content.insert(end_index, gem_line)
+                File.write(file_path, gemfile_content)
+                say "Gemfile: gem '#{name}' added to existing group", :green
+                return
+              end
+            end
+          end
+        end
+
+        gem(name, version, group: group, **options)
         gemfile = File.read(file_path)
         formatted_gemfile = gemfile.gsub(/group: \[([^\]\n]+)\]/, 'group: [ \1 ]')
         File.write(file_path, formatted_gemfile) if formatted_gemfile != gemfile
@@ -70,16 +92,18 @@ module Develoz
 
       def insert_route(route_line)
         file_path = File.join(destination_root, "config/routes.rb")
-        return unless File.exist?(file_path)
+        if File.exist?(file_path)
+          routes_content = File.read(file_path)
 
-        routes_content = File.read(file_path)
+          if routes_content.include?(route_line)
+            say "config/routes.rb: route already present, skipping", :green
+            return
+          end
 
-        if routes_content.include?(route_line)
-          say "config/routes.rb: route already present, skipping", :green
-          return
+          inject_into_file("config/routes.rb", "  #{route_line}\n", before: /^end\s*$/)
+        else
+          false
         end
-
-        inject_into_file("config/routes.rb", "  #{route_line}\n", before: /^end\s*$/)
       end
 
       def append_env(key, value, example: true)
@@ -130,7 +154,27 @@ module Develoz
         copy_file(name, destination)
       end
 
+      private
+
+      def group_regex_for(group)
+        case group
+        when Array
+          sorted = group.map(&:to_sym).sort
+          if sorted == %i[development test]
+            /group\s+(?::development\s*,\s*:test|:test\s*,\s*:development|%i\[\s*(?:development\s+test|test\s+development)\s*\]|%w\[\s*(?:development\s+test|test\s+development)\s*\]|\[\s*(?::development\s*,\s*:test|:test\s*,\s*:development)\s*\])\s+do/
+          else
+            /group\s+.*do/
+          end
+        when :development, "development"
+          /group\s+(?::development|%i\[\s*development\s*\]|%w\[\s*development\s*\])\s+do/
+        when :test, "test"
+          /group\s+(?::test|%i\[\s*test\s*\]|%w\[\s*test\s*\])\s+do/
+        end
+      end
+
       remove_task(*public_instance_methods(false))
     end
+
+    Base.prepend FeatureDocumentationLifecycle
   end
 end

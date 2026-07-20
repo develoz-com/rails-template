@@ -2,11 +2,14 @@
 
 This document summarizes current query-performance practices and optimizations.
 
-## N+1 Detection in Development
+## N+1 Detection (Strict Loading)
 
-- `config/environments/development.rb` enables strict-loading N+1 checks.
-- `verbose_query_logs = true` helps trace query origin quickly.
-- Goal: fail in development when lazy-loading patterns introduce N+1 behavior.
+- The `develoz:strict_loading` generator adds a standalone `config/initializers/strict_loading.rb`, which enables
+  `strict_loading_by_default` with `n_plus_one_only` mode.
+- Violations log in development and production; they raise in test, so N+1 queries fail the test suite instead of
+  passing silently.
+- Optionally set `config.active_record.verbose_query_logs = true` in `config/environments/development.rb` to trace
+  query origin; this isn't configured by default.
 
 ## Query Patterns to Prefer
 

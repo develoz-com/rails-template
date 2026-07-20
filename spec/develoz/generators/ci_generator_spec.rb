@@ -36,11 +36,11 @@ RSpec.describe Develoz::Generators::CiGenerator do
     end
   end
 
-  it "adds rubocop-rails-omakase gem" do
+  it "adds rubocop gem" do
     with_tmp_dir do |tmp|
       run_gen(tmp)
       gemfile = File.read(File.join(tmp, "Gemfile"))
-      expect(gemfile).to include("rubocop-rails-omakase")
+      expect(gemfile).to include("rubocop")
     end
   end
 
@@ -169,7 +169,7 @@ RSpec.describe Develoz::Generators::CiGenerator do
     with_tmp_dir do |tmp|
       run_gen(tmp)
       ci_config = File.read(File.join(tmp, "config/ci.rb"))
-      expect(ci_config).to include("step \"Tests: RSpec\"")
+      expect(ci_config).to include("step \"Tests: RSpec (parallel)\", \"bin/rails spec:parallel\"")
       expect(ci_config).to include("Coverage gate")
     end
   end
@@ -181,11 +181,11 @@ RSpec.describe Develoz::Generators::CiGenerator do
     end
   end
 
-  it "generates .rubocop.yml with rubocop-rails-omakase inheritance" do
+  it "generates .rubocop.yml with custom plugins and rules" do
     with_tmp_dir do |tmp|
       run_gen(tmp)
       rubocop = File.read(File.join(tmp, ".rubocop.yml"))
-      expect(rubocop).to include("rubocop-rails-omakase")
+      expect(rubocop).to include("rubocop-rails")
       expect(rubocop).to include("TargetRubyVersion: 3.4")
     end
   end
@@ -307,7 +307,7 @@ RSpec.describe Develoz::Generators::CiGenerator do
       run_gen(tmp)
       run_gen(tmp)
       gemfile = File.read(File.join(tmp, "Gemfile"))
-      expect(gemfile.scan("rubocop-rails-omakase").size).to eq(1)
+      expect(gemfile.scan(/^\s*gem\s+["']rubocop["']/).size).to eq(1)
       expect(gemfile.scan("reek").size).to eq(1)
       expect(gemfile.scan("flay").size).to eq(1)
     end
@@ -499,6 +499,27 @@ RSpec.describe Develoz::Generators::CiGenerator do
       run_gen(tmp)
       gemfile = File.read(File.join(tmp, "Gemfile"))
       expect(gemfile.scan("haml_lint").size).to eq(1)
+    end
+  end
+
+  it "injects spec type inference into existing rails_helper" do
+    with_tmp_dir do |tmp|
+      helper_path = File.join(tmp, "spec/rails_helper.rb")
+      FileUtils.mkdir_p(File.dirname(helper_path))
+      File.write(helper_path, "RSpec.configure do |config|\nend\n")
+
+      gen = described_class.new([], {}, destination_root: tmp)
+      gen.configure_rspec_type_inference
+
+      content = File.read(helper_path)
+      expect(content).to include("  config.infer_spec_type_from_file_location!")
+    end
+  end
+
+  it "does not inject spec type inference if rails_helper does not exist" do
+    with_tmp_dir do |tmp|
+      gen = described_class.new([], {}, destination_root: tmp)
+      expect(gen.configure_rspec_type_inference).to be(false)
     end
   end
 end

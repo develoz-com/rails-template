@@ -1,0 +1,40 @@
+# API
+
+## Overview
+
+The API feature adds a versioned JSON controller base, Blueprinter serialization, and OpenAPI documentation served by Rswag. It provides conventions and an example contract, not a complete `/api/v1/examples` endpoint.
+
+## What It Adds
+
+- Gems: `blueprinter`, `rswag-api`, and `rswag-ui` in all environments; `rswag-specs` in the test group only.
+- `app/controllers/api/v1/base_controller.rb`, with Pagy pagination, common query parameters, JSON error responses, and an `authenticate` hook.
+- `app/blueprints/example_blueprint.rb`, which serializes `id`, `name`, `created_at`, and `updated_at`.
+- `config/initializers/blueprinter.rb`, which emits lower camel case keys and API-formatted timestamps.
+- `config/initializers/rswag_api.rb` and `config/initializers/rswag_ui.rb`.
+- `spec/requests/api/v1/examples_spec.rb`, an example Rswag request contract.
+- Rswag API and UI mounts at `/api-docs`.
+
+## Configuration
+
+`Api::V1::BaseController` includes `Pagy::Backend`. Pagy is installed by the core frontend generator unless the application was created with `--skip-pagy`. If Pagy was skipped, add it before inheriting from this controller or remove the pagination code.
+
+The default `authenticate` method allows every request. Override it in a subclass or in the base controller before exposing private data.
+
+Rswag reads generated OpenAPI files from `swagger/`. The UI expects `/api-docs/v1/swagger.yaml`. Configure `swagger_helper.rb` to write that file under the same root. The feature doesn't add environment variables.
+
+## Usage
+
+Create API controllers under `Api::V1` and inherit from `Api::V1::BaseController`. Add application routes under an `/api/v1` namespace. Pass a Blueprinter class when rendering records, for example through `render_resource(records, blueprint: ExampleBlueprint, paginate: [:arel])`.
+
+Supported common parameters are `filter`, `page`, `limit`, `sort`, `view`, and `countless`. Pagination metadata can include `recordCount`, `pageCount`, and `countless`.
+
+The example request spec describes `GET /api/v1/examples`, but the feature doesn't generate that route, controller action, model, or `swagger_helper.rb`. Adapt the spec to a real resource and complete the Rswag test setup before running it.
+
+## Verification
+
+```bash
+bin/rails routes | grep api-docs
+bundle exec rspec spec/requests/api/v1
+```
+
+Start the application and open `/api-docs`. Confirm the UI can load `/api-docs/v1/swagger.yaml`, then call a real API route with and without the required credentials.

@@ -45,7 +45,7 @@ services:
       DATABASE_PORT: ${DATABASE_PORT:-5432}
       DATABASE_USER: ${DATABASE_USER:-postgres}
       DATABASE_PASSWORD: ${DATABASE_PASSWORD:-postgres}
-      SELENIUM_URL: ${SELENIUM_URL:-http://selenium:4444/wd/hub}
+      SELENIUM_URL: ${SELENIUM_URL:-http://selenium:4444}
       MAILCATCHER_URL: ${MAILCATCHER_URL:-http://mailcatcher:1080}
     ports:
       - "3000:3000"

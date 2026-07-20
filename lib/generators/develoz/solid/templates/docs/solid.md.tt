@@ -1,0 +1,80 @@
+# Solid Stack
+
+## Overview
+
+The Solid Stack generator configures database-backed jobs and caching, adds Action Cable environment settings,
+and mounts Mission Control Jobs for queue inspection. It installs the Solid Queue, Solid Cache, Solid Cable, and
+Mission Control Jobs gems without running their upstream installers.
+
+Run it from the Rails application root:
+
+```bash
+rails g develoz:solid
+```
+
+## What It Adds
+
+- `solid_queue`, `solid_cache`, `solid_cable`, and `mission_control-jobs` in the Gemfile.
+- `config/queue.yml` with one dispatcher, workers for all queues, three threads, and a generated process count
+  based on `JOB_CONCURRENCY` or `1`.
+- `config/cache.yml` with a 256 MB maximum size, a generated environment namespace, and the `cache` database
+  selected in production.
+- `config/cable.yml` with the async adapter in development, the test adapter in test, and the Redis adapter in
+  production. Production defaults to `redis://localhost:6379/1` and uses an application-specific channel prefix.
+- `config/recurring.yml` with an hourly `SolidQueue::Job.clear_finished_in_batches` command in development and
+  production.
+- `app/jobs/application_job.rb` with commented examples for retrying deadlocks and discarding deserialization errors.
+- `config/initializers/solid.rb`, which selects `:solid_queue` for Active Job and `:solid_cache_store` for Rails
+  caching.
+- `config/initializers/mission_control.rb`, which disables Mission Control's HTTP basic authentication.
+- `mount MissionControl::Jobs::Engine, at: "/jobs"` in `config/routes.rb`.
+
+## Configuration
+
+Review `config/queue.yml` before starting workers. `JOB_CONCURRENCY` is read while the generator renders the file,
+so the generated `processes` value is static until you edit it.
+
+The cache namespace and production Redis URL are also rendered into their files during generation. Edit
+`config/cache.yml` and `config/cable.yml` when the deployment needs different runtime values.
+
+The generated cable configuration uses Redis in production even though `solid_cable` is added to the Gemfile.
+Change the adapter only after adding the matching database and deployment setup.
+
+HTTP basic authentication is disabled for Mission Control Jobs. Protect `/jobs` with the application's
+authentication and authorization before exposing it outside a trusted environment.
+
+This generator has no feature-specific command-line options.
+
+## Usage
+
+Install the gems after generation:
+
+```bash
+bundle install
+```
+
+Enqueue work through Active Job as usual:
+
+```ruby
+MyJob.perform_later(record.id)
+```
+
+Add recurring entries to `config/recurring.yml` using either a job class or a Ruby command. Visit `/jobs` in the
+running application to inspect queues through Mission Control Jobs.
+
+## Verification
+
+Confirm that Rails selected the generated adapters:
+
+```bash
+bin/rails runner 'puts ActiveJob::Base.queue_adapter.class.name; p Rails.cache'
+```
+
+Check the mounted engine:
+
+```bash
+bin/rails routes | grep /jobs
+```
+
+Start the application's queue worker using the process command chosen by the application, enqueue a small job,
+and confirm that it appears and completes in `/jobs`.

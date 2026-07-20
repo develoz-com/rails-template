@@ -1,0 +1,57 @@
+# Agent Documentation
+
+## Overview
+
+The agent documentation generator adds repository guidance for coding agents, detailed development documents, a pull request template, and an example external API test stack built with Faraday, VCR, and WebMock.
+
+Run it with:
+
+```bash
+rails g develoz:agents_docs
+bundle install
+```
+
+## What It Adds
+
+- `faraday` and `faraday-retry` gems
+- `vcr` and `webmock` gems in the test group
+- `AGENTS.md` when that file does not already exist
+- `docs/development.md`
+- `docs/testing.md`
+- `docs/performance.md`
+- `.github/pull_request_template.md`
+- `spec/support/vcr.rb`
+- `spec/support/faraday.rb`
+- `spec/requests/example_api_spec.rb`
+- `spec/cassettes/Example_API/fetches_data_from_an_external_API.yml`
+
+The generated `AGENTS.md` points agents to the detailed guides and states project quality expectations. The three guides cover local commands, general RSpec and coverage practices, and query performance. The testing guide is general project guidance, not a generated feature guide from system specs.
+
+The Faraday factory configures JSON requests and responses plus retry middleware with three retries, a 0.5 second interval, and exponential backoff. VCR stores cassettes under `spec/cassettes`, hooks into WebMock, reads RSpec metadata, and allows localhost requests.
+
+## Configuration
+
+If `AGENTS.md` already exists, the generator keeps its existing content instead of replacing it. Develoz still updates the marked Feature Documentation block so the generated feature guide is linked. Review the generated development, testing, and performance guidance against the application's actual commands and policies.
+
+RSpec must load `spec/support/vcr.rb` for VCR metadata configuration. API specs that use the helper should require `support/faraday`, as the example does.
+
+Replace the example API URL, cassette, assertions, and Faraday settings with application-specific values. Never commit secrets or sensitive response data in VCR cassettes.
+
+## Usage
+
+Use `FaradayFactory.build(url: "https://api.example.com")` to create a JSON client with retry behavior. Mark an RSpec example or group with `:vcr` to match requests against a cassette.
+
+The generated example uses the committed cassette at `spec/cassettes/Example_API/fetches_data_from_an_external_API.yml`, so it demonstrates the request path without contacting the example host.
+
+Fill in the pull request template's Changes, How to review, and Risks prompts for each pull request. Keep `AGENTS.md` short and put detailed, changing instructions in the linked documents.
+
+## Verification
+
+Run the generated API example and inspect the test dependency setup:
+
+```bash
+bundle check
+bundle exec rspec spec/requests/example_api_spec.rb
+```
+
+Confirm that the example returns the cassette's status `200` without a real network request. Also check that `AGENTS.md` links the development, testing, performance, and feature documents, and that the pull request template appears when opening a pull request.

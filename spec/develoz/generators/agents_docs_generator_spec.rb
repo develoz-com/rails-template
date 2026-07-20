@@ -3,6 +3,7 @@
 require "spec_helper"
 require "tmpdir"
 require "generators/develoz/agents_docs/agents_docs_generator"
+require "generators/develoz/strict_loading/strict_loading_generator"
 
 RSpec.describe Develoz::Generators::AgentsDocsGenerator do
   def with_tmp_dir
@@ -83,6 +84,45 @@ RSpec.describe Develoz::Generators::AgentsDocsGenerator do
       run_gen(tmp)
       content = File.read(File.join(tmp, "AGENTS.md"))
       expect(content).to include("docs/development.md")
+    end
+  end
+
+  it "retains its full AGENTS template before adding the managed feature block" do
+    with_tmp_dir do |tmp|
+      described_class.start([], destination_root: tmp)
+      content = File.read(File.join(tmp, "AGENTS.md"))
+
+      expect(content).to include("Quality Expectations", "docs/development.md")
+      expect(content).to include("docs/agents-docs.md")
+      expect(content.index("Quality Expectations")).to be < content.index("## Feature Documentation")
+    end
+  end
+
+  it "promotes the exact minimal AGENTS scaffold and retains recognized feature links" do
+    with_tmp_dir do |tmp|
+      Develoz::Generators::StrictLoadingGenerator.start([], destination_root: tmp)
+
+      described_class.start([], destination_root: tmp)
+      content = File.binread(File.join(tmp, "AGENTS.md"))
+
+      aggregate_failures do
+        expect(content).to include("Quality Expectations", "docs/development.md")
+        expect(content).to include("docs/strict-loading.md", "docs/agents-docs.md")
+        expect(content.index("docs/strict-loading.md")).to be < content.index("docs/agents-docs.md")
+        expect(content.scan("BEGIN DEVELOZ FEATURE DOCUMENTATION").size).to eq(1)
+      end
+    end
+  end
+
+  it "preserves existing AGENTS content outside the managed block" do
+    with_tmp_dir do |tmp|
+      original = "# Existing guidance\n\nKeep this byte-for-byte."
+      File.binwrite(File.join(tmp, "AGENTS.md"), original)
+
+      described_class.start([], destination_root: tmp)
+
+      expect(File.binread(File.join(tmp, "AGENTS.md"))).to start_with(original)
+      expect(File.binread(File.join(tmp, "AGENTS.md"))).not_to include("Quality Expectations")
     end
   end
 

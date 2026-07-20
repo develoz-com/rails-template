@@ -1,0 +1,56 @@
+# Maintenance
+
+## Overview
+
+The maintenance generator installs Shopify's Maintenance Tasks engine and provides starting points for application-specific data work. It adds a web route, an example batched task, and two Rake task shells that must be adapted before they perform useful maintenance.
+
+Run it with:
+
+```bash
+rails g develoz:maintenance
+bundle install
+```
+
+## What It Adds
+
+- The `maintenance_tasks` gem in `Gemfile`
+- `mount MaintenanceTasks::Engine, at: "/maintenance_tasks"` in `config/routes.rb`
+- `app/tasks/maintenance/example_task.rb`
+- `lib/tasks/maintenance_counters.rake`
+
+`Maintenance::ExampleTask` inherits from `MaintenanceTasks::Task`. Its sample collection batches `User` records in groups of 1,000, reports `User.count`, and updates each batch's `updated_at` value.
+
+The Rake file defines `maintenance:update_counters` and `maintenance:purge_stale`. The first currently eager loads models and prints their names. The second calculates a retention cutoff but contains only commented sample deletion logic. Neither task updates counters or deletes records until application-specific code is added.
+
+## Configuration
+
+Replace `User` and the sample `process` method in `app/tasks/maintenance/example_task.rb` with the records and operation your task needs.
+
+Add real counter update logic to `maintenance:update_counters`. Add an explicit model scope and deletion strategy to `maintenance:purge_stale`. The purge task reads `RETENTION_DAYS` and defaults to 90.
+
+The generator mounts the engine without an authentication constraint. Add the authorization required by the application before exposing `/maintenance_tasks` outside a trusted environment.
+
+## Usage
+
+Open the Maintenance Tasks interface at `/maintenance_tasks` to find and run task classes under `app/tasks/maintenance`.
+
+List and run the generated Rake tasks with:
+
+```bash
+bin/rails --tasks maintenance
+bin/rails maintenance:update_counters
+RETENTION_DAYS=30 bin/rails maintenance:purge_stale
+```
+
+Review the customized task against production data volume before running it. Keep task operations resumable and safe to repeat.
+
+## Verification
+
+Confirm the engine route and task registration:
+
+```bash
+bin/rails routes | grep maintenance_tasks
+bin/rails --tasks maintenance
+```
+
+Start the application, visit `/maintenance_tasks`, and confirm that `Maintenance::ExampleTask` appears. Test customized maintenance logic against non-production data before scheduling or starting a run.

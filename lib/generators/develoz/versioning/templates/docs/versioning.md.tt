@@ -1,0 +1,56 @@
+# Versioning
+
+## Overview
+
+The versioning generator exposes an application version from the `APP_VERSION` environment variable and provides a helper and partial for displaying it in the interface.
+
+Run it after the tooling generator has created `config/initializers/constants.rb`:
+
+```bash
+rails g develoz:versioning
+```
+
+## What It Adds
+
+- `Constants::APP_VERSION = ENV.fetch("APP_VERSION", "dev")` in `config/initializers/constants.rb`
+- A top-level `APP_VERSION = Constants::APP_VERSION` alias in the same initializer
+- An `app_version` method in `app/helpers/application_helper.rb`
+- `app/views/shared/_app_version.html.erb`
+- `spec/helpers/application_helper_spec.rb`
+
+If `app/helpers/application_helper.rb` already exists, the generator inserts the method before the module's closing `end`. Otherwise, it creates the helper module. The shared partial renders the version only when `app_version` is present and uses small gray text with dark-mode classes.
+
+## Configuration
+
+Set `APP_VERSION` in the runtime environment to the release identifier you want to display:
+
+```bash
+APP_VERSION=2026.07.16 bin/rails server
+```
+
+When the variable is absent, the value is `dev`. Rails reads the value while loading `config/initializers/constants.rb`, so restart the application after changing it.
+
+The generator expects the constants initializer and its `# additional constants appended by generators` marker to exist. Run `develoz:tooling` first when installing features individually.
+
+## Usage
+
+Render the generated partial wherever the application should show its version:
+
+```erb
+<%%= render "shared/app_version" %>
+```
+
+The generator does not insert the partial into a layout. Choose an appropriate footer, diagnostics page, or other location in the application.
+
+Ruby and view code can also read `APP_VERSION` directly or call the `app_version` helper.
+
+## Verification
+
+Run the helper spec and inspect the configured value:
+
+```bash
+bundle exec rspec spec/helpers/application_helper_spec.rb
+APP_VERSION=test-release bin/rails runner 'puts APP_VERSION'
+```
+
+The runner should print `test-release`. Render `shared/app_version` from a page and confirm that the same value appears. Start Rails without `APP_VERSION` and confirm that the fallback is `dev`.

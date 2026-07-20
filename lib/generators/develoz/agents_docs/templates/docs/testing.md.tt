@@ -6,7 +6,7 @@ This guide documents how to run and write tests.
 
 - RSpec
 - Capybara (system specs)
-- FactoryBot and Faker
+- FactoryBot
 - SimpleCov (line and branch thresholds)
 - WebMock and VCR (`spec/cassettes/`)
 

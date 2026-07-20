@@ -1,0 +1,76 @@
+# Docker Development
+
+## Overview
+
+This feature provides a Docker Compose development environment for the Rails application. It runs the app with PostgreSQL, Selenium, and MailCatcher, and keeps the application source mounted for local editing.
+
+This setup is for development. It uses `Dockerfile.dev` and doesn't configure production deployment. The Kamal feature supplies the separate `Dockerfile.prod` and deployment configuration.
+
+## What It Adds
+
+- `docker-compose.yml` with `app`, `postgres`, `selenium`, and `mailcatcher` services.
+- `Dockerfile.dev` with Ruby <%= RUBY_VERSION %>, build tools, PostgreSQL headers, libvips, Node.js, and npm.
+- Executable `bin/dev`, which runs `docker compose up --build`.
+- Executable `bin/setup`, which installs gems and runs `db:create db:migrate` when `config/database.yml` exists.
+- Executable `bin/docker-entrypoint`, which removes a stale Rails server PID and starts Rails on `0.0.0.0:3000`.
+- Executable `bin/run`, which runs a command in a running or stopped Compose service and falls back to the local machine when Docker isn't available.
+- Persistent `postgres_data` and `bundle_cache` volumes.
+- `.env` in `.gitignore`.
+
+## Configuration
+
+The generator appends these values to `.env` and adds matching keys to `.env.example`:
+
+| Variable | Generated value | Purpose |
+| --- | --- | --- |
+| `POSTGRES_USER` | `postgres` | PostgreSQL user. |
+| `POSTGRES_PASSWORD` | `postgres` | PostgreSQL password. |
+| `POSTGRES_DB` | `<%= app_name %>_development` | Development database name. |
+| `DATABASE_URL` | `postgres://postgres:postgres@postgres:5432/<%= app_name %>_development` | Rails database connection inside Compose. |
+| `SELENIUM_URL` | `http://selenium:4444` | Remote browser endpoint. |
+| `MAILCATCHER_URL` | `http://mailcatcher:1080` | MailCatcher web endpoint. |
+
+The Compose file also accepts `DATABASE_HOST`, `DATABASE_PORT`, `DATABASE_USER`, and `DATABASE_PASSWORD` overrides for the app service. Change the generated development credentials if the environment is shared or exposed.
+
+Ports are published on the host: Rails on `3000`, PostgreSQL on `5432`, Selenium WebDriver on `4444`, Selenium's browser viewer on `7900`, MailCatcher web on `1080`, and SMTP on `1025`.
+
+## Usage
+
+Build and start the complete development stack:
+
+```bash
+bin/dev
+```
+
+Run Rails commands through the Docker-aware command wrapper:
+
+```bash
+bin/run bin/rails db:migrate
+bin/run bundle exec rspec
+bin/run --container app bin/rails console
+```
+
+When `app` is running, `bin/run` uses `docker compose exec`. If the service exists but is stopped, it uses a temporary `docker compose run --rm` container. Otherwise, it runs the command locally and loads asdf, rbenv, or RVM when present.
+
+Useful direct Compose commands:
+
+```bash
+docker compose ps
+docker compose logs -f app
+docker compose down
+```
+
+Open MailCatcher at `http://localhost:1080` and Selenium's browser viewer at `http://localhost:7900`.
+
+## Verification
+
+Render and validate the Compose configuration before starting services:
+
+```bash
+docker compose config
+docker compose up --build -d
+docker compose ps
+docker compose exec app bin/rails runner 'puts Rails.env'
+```
+
+The services should be listed, PostgreSQL should become healthy, and the runner should print `development`. Stop the stack with `docker compose down` when finished.

@@ -1,6 +1,58 @@
 # frozen_string_literal: true
 
+require "tmpdir"
+
 RSpec.describe Develoz::Manifest do
+  def expect_documentation_parity(entry, destination_root)
+    rendered = render_documentation(entry, destination_root)
+
+    aggregate_failures(entry.name) do
+      expect_generator_artifacts(entry)
+      expect(rendered.lines.first.chomp).to eq("# #{entry.documentation_title}")
+      expect(rendered).to include(*required_documentation_sections)
+      expect_document_format(rendered)
+    end
+  end
+
+  def render_documentation(entry, destination_root)
+    generator_class = Develoz::Generators.const_get("#{entry.name.camelize}Generator")
+    generator = generator_class.new([], {}, destination_root:)
+    Develoz::Generators::FeatureDocumentation.new(generator).render
+    File.binread(File.join(destination_root, "docs/#{entry.documentation_slug}.md"))
+  end
+
+  def expect_generator_artifacts(entry)
+    expect(File).to exist(local_generator_file(entry))
+    expect_template_artifact(entry)
+  end
+
+  def expect_template_artifact(entry)
+    generator_class = Develoz::Generators.const_get("#{entry.name.camelize}Generator")
+    template_path = File.join(generator_class.source_root, "docs/#{entry.documentation_slug}.md.tt")
+
+    expect(template_path).to eq(local_template_file(entry))
+    expect(File).to exist(template_path)
+  end
+
+  def local_generator_file(entry)
+    File.expand_path("../../lib/generators/develoz/#{entry.name}/#{entry.name}_generator.rb", __dir__)
+  end
+
+  def local_template_file(entry)
+    relative_path = "../../lib/generators/develoz/#{entry.name}/templates/docs/" \
+                    "#{entry.documentation_slug}.md.tt"
+    File.expand_path(relative_path, __dir__)
+  end
+
+  def expect_document_format(rendered)
+    expect(rendered).to be_ascii_only
+    expect(rendered).to end_with("\n")
+  end
+
+  def required_documentation_sections
+    ["Overview", "What It Adds", "Configuration", "Usage", "Verification"].map { |section| "## #{section}" }
+  end
+
   describe ".load" do
     it "loads the manifest from config/generators.yml" do
       manifest = described_class.load
@@ -24,6 +76,46 @@ RSpec.describe Develoz::Manifest do
       manifest = described_class.load
       manifest.each_value do |config|
         expect(config).to have_key("description")
+      end
+    end
+
+    it "includes valid, unique documentation metadata for all 23 generators" do
+      manifest = described_class.load
+      slugs = manifest.values.map { |config| config.fetch("documentation_slug") }
+
+      aggregate_failures do
+        expect(manifest.size).to eq(23)
+        expect(slugs).to all(match(/\A[a-z0-9]+(?:-[a-z0-9]+)*\z/))
+        expect(slugs.uniq).to eq(slugs)
+        expect(manifest.values).to all(satisfy { |config| config.fetch("documentation_title").match?(/\S/) })
+      end
+    end
+
+    it "uses a collision-free direct documentation path for testing" do
+      expect(described_class.fetch("testing").documentation_slug).to eq("testing-feature")
+    end
+
+    it "rejects duplicate documentation slugs" do
+      manifest = {
+        "first" => { "documentation_slug" => "shared", "documentation_title" => "First" },
+        "second" => { "documentation_slug" => "shared", "documentation_title" => "Second" }
+      }
+
+      expect { described_class.send(:validate!, manifest) }
+        .to raise_error(Develoz::Error, /Duplicate documentation slug\(s\): shared/)
+    end
+
+    it "rejects missing or malformed documentation metadata" do
+      manifest = { "invalid" => { "documentation_slug" => "Not Valid", "documentation_title" => "" } }
+
+      expect { described_class.send(:validate!, manifest) }
+        .to raise_error(Develoz::Error, /invalid must define a valid documentation_slug and documentation_title/)
+    end
+
+    it "keeps every manifest entry in parity with its generator and feature guide" do
+      Dir.mktmpdir do |destination_root|
+        entries = described_class.all
+        entries.each { |entry| expect_documentation_parity(entry, destination_root) }
       end
     end
   end
@@ -174,14 +266,18 @@ RSpec.describe Develoz::Manifest do
       expect(tooling_idx).to be < api_idx
     end
 
-    it "exposes name and description on each entry" do
+    it "exposes name, description, and documentation metadata on each entry" do
       options = Develoz::Options.new(api: true)
       entries = described_class.for(options)
       api_entry = entries.find { |e| e.name == "api" }
 
-      expect(api_entry.name).to eq("api")
-      expect(api_entry.description).to be_a(String)
-      expect(api_entry.description).not_to be_empty
+      aggregate_failures do
+        expect(api_entry.name).to eq("api")
+        expect(api_entry.description).to be_a(String)
+        expect(api_entry.description).not_to be_empty
+        expect(api_entry.documentation_slug).to eq("api")
+        expect(api_entry.documentation_title).to eq("API")
+      end
     end
 
     it "handles multiple opt-in flags correctly" do
@@ -214,10 +310,14 @@ RSpec.describe Develoz::Manifest do
   end
 
   describe "Entry struct" do
-    it "has name and description attributes" do
-      entry = described_class::Entry.new("test_gen", "Test generator")
-      expect(entry.name).to eq("test_gen")
-      expect(entry.description).to eq("Test generator")
+    it "has name, description, documentation slug, and documentation title attributes" do
+      entry = described_class::Entry.new("test_gen", "Test generator", "test-gen", "Test Generator")
+      aggregate_failures do
+        expect(entry.name).to eq("test_gen")
+        expect(entry.description).to eq("Test generator")
+        expect(entry.documentation_slug).to eq("test-gen")
+        expect(entry.documentation_title).to eq("Test Generator")
+      end
     end
   end
 end

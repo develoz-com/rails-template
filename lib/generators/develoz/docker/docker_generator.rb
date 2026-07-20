@@ -42,7 +42,7 @@ module Develoz
         append_env "POSTGRES_PASSWORD", "postgres"
         append_env "POSTGRES_DB", "#{app_name}_development"
         append_env "DATABASE_URL", "postgres://postgres:postgres@postgres:5432/#{app_name}_development"
-        append_env "SELENIUM_URL", "http://selenium:4444/wd/hub"
+        append_env "SELENIUM_URL", "http://selenium:4444"
         append_env "MAILCATCHER_URL", "http://mailcatcher:1080"
       end
 

@@ -4,11 +4,14 @@ This guide covers day-to-day local development.
 
 ## Core Rules
 
+<%- if options[:docker] -%>
 - Use Docker-first workflows (`docker compose`).
+<%- end -%>
 - Run project commands through `bin/rails` or `bundle exec`.
 
 ## Boot Local Environment
 
+<%- if options[:docker] -%>
 ```bash
 cp .env.example .env
 docker compose up --build -d app
@@ -22,6 +25,15 @@ Useful lifecycle commands:
 docker compose logs -f app
 docker compose down
 ```
+<%- else -%>
+```bash
+cp .env.example .env
+bundle install
+bin/rails db:create db:migrate
+bin/rails db:seed
+bin/rails server
+```
+<%- end -%>
 
 ## Command Reference
 
@@ -89,8 +101,8 @@ Use inline runner snippets only when the command is trivial and shell quoting is
 ### Frontend Assets
 
 ```bash
-bin/rails tailwindcss:build
-bin/rails tailwindcss:watch
+bin/rails assets:precompile
+bin/importmap json
 ```
 
 ## Recommended Change Workflow
@@ -110,9 +122,13 @@ bundle exec brakeman
 
 ## Troubleshooting
 
+<%- if options[:docker] -%>
 - Docker unavailable: start Docker and rerun commands.
+<%- end -%>
 - Migration issues: run `bin/rails db:migrate:status`.
+<%- if options[:docker] -%>
 - App startup issues: check `docker compose logs -f app postgres redis`.
+<%- end -%>
 - Stale test schema/data: rerun `bin/rails db:migrate` and `bundle exec rspec`.
 
 ## Related Docs

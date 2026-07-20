@@ -20,6 +20,7 @@ RSpec.describe Develoz::Generators::TestingGenerator do
     gen.create_spec_helper
     gen.create_rails_helper
     gen.create_rspec_parallel_config
+    gen.create_spec_parallel_task
     gen
   end
 
@@ -209,6 +210,42 @@ RSpec.describe Develoz::Generators::TestingGenerator do
     end
   end
 
+  it "defaults system specs to rack_test and switches to headless_chrome for screenshots" do
+    with_tmp_dir do |tmp|
+      run_gen(tmp)
+      rails_helper = File.read(File.join(tmp, "spec/rails_helper.rb"))
+      expect(rails_helper).to include('driven_by ENV["SCREENSHOTS"] == "true" ? :headless_chrome : :rack_test')
+    end
+  end
+
+  it "drives js-tagged system specs with headless_chrome" do
+    with_tmp_dir do |tmp|
+      run_gen(tmp)
+      rails_helper = File.read(File.join(tmp, "spec/rails_helper.rb"))
+      expect(rails_helper).to include("config.before(type: :system, js: true) { driven_by :headless_chrome }")
+    end
+  end
+
+  it "registers a remote Selenium driver when SELENIUM_URL is set" do
+    with_tmp_dir do |tmp|
+      run_gen(tmp)
+      rails_helper = File.read(File.join(tmp, "spec/rails_helper.rb"))
+      expect(rails_helper).to include('selenium_url = ENV["SELENIUM_URL"].to_s')
+      expect(rails_helper).to include("browser: :remote, url: selenium_url")
+      expect(rails_helper).to include("browser: :chrome")
+    end
+  end
+
+  it "wires Capybara server_host and app_host for remote Selenium" do
+    with_tmp_dir do |tmp|
+      run_gen(tmp)
+      rails_helper = File.read(File.join(tmp, "spec/rails_helper.rb"))
+      expect(rails_helper).to include('Capybara.server_host = "0.0.0.0"')
+      expect(rails_helper).to include("Capybara.app_host = ").and include("Socket.gethostname")
+      expect(rails_helper).to include("TEST_ENV_NUMBER")
+    end
+  end
+
   it "generates rails_helper with FactoryBot configuration" do
     with_tmp_dir do |tmp|
       run_gen(tmp)
@@ -345,6 +382,50 @@ RSpec.describe Develoz::Generators::TestingGenerator do
       run_gen(tmp)
       rails_helper = File.read(File.join(tmp, "spec/rails_helper.rb"))
       expect(rails_helper).to include("config.filter_rails_from_backtrace!")
+    end
+  end
+
+  it "injects spec type inference into existing rails_helper" do
+    with_tmp_dir do |tmp|
+      helper_path = File.join(tmp, "spec/rails_helper.rb")
+      FileUtils.mkdir_p(File.dirname(helper_path))
+      File.write(helper_path, "RSpec.configure do |config|\nend\n")
+
+      run_gen(tmp)
+
+      content = File.read(helper_path)
+      expect(content).to include("  config.infer_spec_type_from_file_location!")
+    end
+  end
+
+  it "injects the system-spec driver bindings into existing rails_helper" do
+    with_tmp_dir do |tmp|
+      helper_path = File.join(tmp, "spec/rails_helper.rb")
+      FileUtils.mkdir_p(File.dirname(helper_path))
+      File.write(helper_path, "RSpec.configure do |config|\nend\n")
+
+      run_gen(tmp)
+
+      content = File.read(helper_path)
+      expect(content).to include('driven_by ENV["SCREENSHOTS"] == "true" ? :headless_chrome : :rack_test')
+      expect(content).to include("config.before(type: :system, js: true) { driven_by :headless_chrome }")
+    end
+  end
+
+  it "generates lib/tasks/spec_parallel.rake" do
+    with_tmp_dir do |tmp|
+      run_gen(tmp)
+      expect(File).to exist(File.join(tmp, "lib/tasks/spec_parallel.rake"))
+    end
+  end
+
+  it "spec_parallel task isolates system specs and drives parallel:spec" do
+    with_tmp_dir do |tmp|
+      run_gen(tmp)
+      rake = File.read(File.join(tmp, "lib/tasks/spec_parallel.rake"))
+      expect(rake).to include("namespace :spec do")
+      expect(rake).to include("--single spec/system/")
+      expect(rake).to include('Rake::Task["parallel:spec"].invoke')
     end
   end
 end

@@ -4,6 +4,7 @@ require "spec_helper"
 require "open3"
 require "fileutils"
 require "tmpdir"
+require "digest/sha2"
 
 # E2e specs for `develoz new` driving the full greenfield generation pipeline.
 #
@@ -47,6 +48,44 @@ RSpec.describe "develoz new (greenfield e2e)", :e2e, :slow do # rubocop:disable 
 
   def gemfile_content(app_dir)
     read_file(app_dir, "Gemfile")
+  end
+
+  def option_values(flags)
+    flags.to_h { |flag| [flag.delete_prefix("--").to_sym, true] }
+  end
+
+  def selected_entries(flags)
+    Develoz::Manifest.for(Develoz::Options.new(**option_values(flags)))
+  end
+
+  def expected_documentation_paths(flags)
+    selected_entries(flags).map { |entry| "docs/#{entry.documentation_slug}.md" }
+  end
+
+  def managed_documentation_paths(app_dir, path)
+    content = read_file(app_dir, path)
+    block = content.match(
+      /#{Regexp.escape(Develoz::Generators::FeatureDocumentation::BEGIN_MARKER)}.*?#{Regexp.escape(Develoz::Generators::FeatureDocumentation::END_MARKER)}/mo
+    ).to_s
+    block.scan(%r{\(docs/([^)]+\.md)\)}).flatten.map { |target| "docs/#{target}" }
+  end
+
+  def feature_documentation_paths(app_dir)
+    Develoz::Manifest.all.filter_map do |entry|
+      path = "docs/#{entry.documentation_slug}.md"
+      path if file_exists?(app_dir, path)
+    end
+  end
+
+  def file_digests(app_dir)
+    paths = Dir.glob("**/*", File::FNM_DOTMATCH, base: app_dir)
+               .select { |path| File.file?(File.join(app_dir, path)) }
+    paths.index_with { |path| Digest::SHA256.file(File.join(app_dir, path)).hexdigest }
+  end
+
+  def rerun_install(app_dir, flags)
+    options = option_values(flags)
+    Develoz::Generators::InstallGenerator.new([], options, destination_root: app_dir).invoke_all
   end
 
   shared_examples "core greenfield output" do
@@ -130,8 +169,8 @@ RSpec.describe "develoz new (greenfield e2e)", :e2e, :slow do # rubocop:disable 
     it "creates config/ci.rb with RSpec and lint steps" do
       content = read_file(dir, "config/ci.rb")
       aggregate_failures do
-        expect(content).to include("Tests: RSpec")
-        expect(content).to include("bundle exec rspec")
+        expect(content).to include("Tests: RSpec (parallel)")
+        expect(content).to include("bin/rails spec:parallel")
         expect(content).to include("Style: Ruby")
         expect(content).to include("Security: Brakeman")
       end
@@ -185,6 +224,32 @@ RSpec.describe "develoz new (greenfield e2e)", :e2e, :slow do # rubocop:disable 
       expect(file_exists?(dir, "AGENTS.md")).to be true
     end
 
+    it "creates exactly the selected feature guides and managed links" do
+      expected_paths = expected_documentation_paths(flags)
+
+      aggregate_failures do
+        expect(feature_documentation_paths(dir)).to eq(expected_paths)
+        expect(managed_documentation_paths(dir, "README.md")).to eq(expected_paths)
+        expect(managed_documentation_paths(dir, "AGENTS.md")).to eq(expected_paths)
+        expect(expected_paths).to all(satisfy { |path| file_exists?(dir, path) })
+      end
+    end
+
+    it "retains the Rails README and generates the full AGENTS template" do
+      aggregate_failures do
+        expect(read_file(dir, "README.md")).to include("This README would normally document")
+        expect(read_file(dir, "AGENTS.md")).to include("Development Environment", "Quality Expectations")
+      end
+    end
+
+    it "is byte-identical after a second install" do
+      first_run = file_digests(dir)
+
+      rerun_install(dir, flags)
+
+      expect(file_digests(dir)).to eq(first_run)
+    end
+
     it "creates .env and .env.example and gitignores .env" do
       aggregate_failures do
         expect(file_exists?(dir, ".env")).to be true
@@ -205,6 +270,7 @@ RSpec.describe "develoz new (greenfield e2e)", :e2e, :slow do # rubocop:disable 
     let(:stdout) { generation_result[1] }
     let(:stderr) { generation_result[2] }
     let(:generation_result) { generate_app(app_dir) }
+    let(:flags) { [] }
 
     before { generation_result }
 
@@ -300,6 +366,12 @@ RSpec.describe "develoz new (greenfield e2e)", :e2e, :slow do # rubocop:disable 
         expect(file_exists?(app_dir, "app/services/push_notification_service.rb")).to be true
         expect(gemfile_content(app_dir)).to include('"web-push"')
       end
+    end
+
+    it "orders PWA before Push documentation" do
+      paths = managed_documentation_paths(app_dir, "README.md")
+
+      expect(paths.index("docs/pwa.md")).to be < paths.index("docs/push.md")
     end
 
     it "appends VAPID env vars" do

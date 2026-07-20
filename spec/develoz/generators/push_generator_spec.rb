@@ -441,6 +441,16 @@ RSpec.describe Develoz::Generators::PushGenerator do
         expect { gen.ensure_pwa_prerequisite }.to output(/requires --pwa/).to_stdout
       end
     end
+
+    it "runs the PWA prerequisite through its full lifecycle before Push documentation" do
+      with_tmp_dir do |tmp|
+        described_class.start([], destination_root: tmp)
+        readme = File.read(File.join(tmp, "README.md"))
+
+        expect(readme).to include("docs/pwa.md", "docs/push.md")
+        expect(readme.index("docs/pwa.md")).to be < readme.index("docs/push.md")
+      end
+    end
   end
 
   context "when pwa is enabled" do

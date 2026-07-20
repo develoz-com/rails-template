@@ -1,0 +1,123 @@
+# Concerns
+
+## Overview
+
+The concerns generator adds reusable Active Record behavior for PostgreSQL text search, optimized finders, status
+transitions, and configuration-backed attributes. It also creates the `Configuration` model, two migration
+templates, and RSpec coverage for every generated component.
+
+Run it after the database and testing generators from the Rails application root:
+
+```bash
+rails g develoz:concerns
+```
+
+## What It Adds
+
+- `app/models/concerns/searchable_concern.rb`, which defines `searchable_by`, a PgSearch `search_by_text` scope
+  with prefix matching, and a blank-safe `search` scope.
+- `app/models/concerns/optimized_finders.rb`, which defines `find_for`, `for`, `not_for`, and `gather`. Loaded
+  associations and virtual attributes are searched in memory; other calls use Active Record queries. It also
+  prepends these optimizations to `ActiveRecord::Associations::CollectionProxy`.
+- `app/models/concerns/transitionable.rb`, which builds string-backed Rails enums in strict or free transition
+  mode, records status history in JSONB, validates transitions, supports metadata, and adds `can_be_*?`, `in_state`,
+  `last_transition`, and `status_times` APIs.
+- `app/models/concerns/configurable.rb`, which defines the `configurable` attribute DSL and scoped configuration
+  read, write, update, and delete helpers.
+- `app/models/configuration.rb`, with global and scoped configuration queries, JSON and YAML value helpers,
+  boolean feature checks, and configurable display names.
+- A timestamped `db/migrate/*_add_status_transitions.rb` template for `status`, `status_transitions`, and a
+  concurrent status index.
+- A timestamped `db/migrate/*_create_configurations.rb` migration with a UUID primary key, JSONB values,
+  polymorphic type and ID columns, active flags, and concurrent indexes.
+- `spec/models/concerns/searchable_concern_spec.rb`, `spec/models/concerns/optimized_finders_spec.rb`,
+  `spec/models/concerns/transitionable_spec.rb`, `spec/models/concerns/configurable_spec.rb`, and
+  `spec/models/configuration_spec.rb`.
+- `extend SearchableConcern`, `include Configurable`, and `include OptimizedFinders` in
+  `app/models/application_record.rb` after `primary_abstract_class`.
+
+`Transitionable` isn't added to `ApplicationRecord`; each stateful model opts in explicitly.
+
+## Configuration
+
+Before running migrations, copy or edit the status migration and replace every `:records` placeholder with the
+real table name. As generated, it returns without changing the database when a `records` table doesn't exist.
+
+Both migrations target Active Record 8.0 and PostgreSQL. They use JSONB, concurrent indexes, and the `pgcrypto`
+and `uuid-ossp` extensions. The database role must be allowed to enable those extensions. `SearchableConcern` also
+requires the `pg_search` gem from the database generator.
+
+Update `Configuration::CONFIGURABLES` and `Configuration::FORM_CONFIGURABLES` for the models in the application.
+The generated defaults name `User`, `Client`, `Platform`, and `ClientPlatform`.
+
+The generated specs require `spec/rails_helper.rb` and create temporary PostgreSQL-style tables, including JSONB
+columns. This generator has no feature-specific command-line options.
+
+## Usage
+
+Configure search columns on a model:
+
+```ruby
+class Article < ApplicationRecord
+  searchable_by :title, :body
+end
+
+Article.search("rails")
+```
+
+Use the inherited finder helpers on models and associations:
+
+```ruby
+Price.find_for(variant: "hd", license: "buy")
+audit.prices.for(license: %w[buy rent])
+audit.prices.not_for(license: "trial")
+audit.prices.gather(:variant, :license)
+```
+
+Opt a model into transition tracking and declare allowed moves:
+
+```ruby
+class Order < ApplicationRecord
+  extend Transitionable
+
+  states pending: %i[paid cancelled], paid: %i[shipped], shipped: [], cancelled: []
+end
+
+order.update!(status: "paid", transition_metadata: { source: "checkout" })
+```
+
+Declare a configuration-backed attribute. Assignments are persisted after the model saves, and assigning `nil`
+deletes the scoped configuration:
+
+```ruby
+class Client < ApplicationRecord
+  configurable :features, :hash, global_fallback: true
+  configurable :enabled, :boolean
+end
+
+client.update!(enabled: true, features: { "reports" => true })
+```
+
+After adapting the generated migration, apply both migrations:
+
+```bash
+bin/rails db:migrate
+```
+
+## Verification
+
+Run the generated specs:
+
+```bash
+bundle exec rspec spec/models/concerns spec/models/configuration_spec.rb
+```
+
+Confirm that the `configurations` table exists and that the chosen stateful table has both transition columns:
+
+```bash
+bin/rails runner 'p Configuration.column_names'
+bin/rails runner 'p Order.column_names.grep(/status/)'
+```
+
+Finally, exercise one search, one loaded-association finder, one allowed and one rejected transition, and one
+configuration write in the Rails console for the application's real models.

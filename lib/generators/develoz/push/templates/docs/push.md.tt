@@ -1,0 +1,62 @@
+# Push Notifications
+
+## Overview
+
+The Push feature adds storage and delivery building blocks for Web Push. It supplies browser subscription code, service worker handlers, and a Ruby delivery service. The application still owns permission prompts, subscription HTTP endpoints, persistence policy, and the UI that enables notifications.
+
+## What It Adds
+
+- Gem: `web-push`.
+- `app/models/push_subscription.rb`, with unique endpoint and key validation plus an optional `User` association.
+- A `push_subscriptions` migration with `endpoint`, `p256dh`, `auth`, an optional `user_id` foreign key, and a unique endpoint index.
+- `app/services/push_notification_service.rb`, which sends JSON payloads through `WebPush.payload_send` with a 24-hour TTL.
+- `app/javascript/pwa/subscription.js`, exporting `subscribeToPush()`.
+- `app/views/pwa/sw_push_handlers.js`, with `push` and `notificationclick` listeners.
+- `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, and `VAPID_SUBJECT` entries in `.env` and placeholder entries in `.env.example`.
+
+The generated browser module calls `GET /push_subscriptions/vapid_public_key` and `POST /push_subscriptions`, but this feature doesn't generate those routes or their controller.
+
+## Configuration
+
+Push requires PWA because subscriptions attach to its service worker. If PWA isn't enabled, the Push generator prints a warning and runs the PWA generator automatically. When the installer selects Push, the feature manifest also selects PWA first.
+
+Generate a VAPID key pair and keep the private key secret:
+
+```bash
+ruby -e 'require "web-push"; key = WebPush.generate_key; puts "VAPID_PUBLIC_KEY=#{key.public_key}"; puts "VAPID_PRIVATE_KEY=#{key.private_key}"'
+```
+
+Set `VAPID_SUBJECT` to a monitored `mailto:` address or valid site URL. Keep real values in the deployment environment and out of `.env.example`.
+
+Run `bin/rails db:migrate`. The migration references `users`, so the application needs a `users` table. The Auth feature provides one, but Push can use another application user model with the same table name. The model association itself is optional.
+
+Wire the generated JavaScript. Pin and import `pwa/registration.js` as described in the PWA guide. Also pin `pwa/subscription.js`, import `subscribeToPush`, and call it only from a user action so the browser permission prompt has clear context.
+
+The generated service worker doesn't load `app/views/pwa/sw_push_handlers.js`, and no route serves the path mentioned in that file's comment. Copy its listeners into `app/views/pwa/service-worker.js.erb`, or add an explicit JavaScript route and `importScripts` call.
+
+## Usage
+
+Add routes and a controller for the two URLs used by `subscribeToPush()`. The public-key response must be JSON with a `public_key` field. The create action receives `subscription.endpoint` and `subscription.keys`; persist `keys.p256dh` and `keys.auth` in `PushSubscription`, associating the current user when appropriate.
+
+Send a notification from Rails with a stored subscription:
+
+```ruby
+PushNotificationService.send_notification(
+  PushSubscription.first,
+  title: "Update available",
+  body: "Open the app to view it.",
+  url: "/"
+)
+```
+
+The service removes expired or invalid subscriptions reported by `web-push` and logs other `WebPush::Error` failures as warnings. Payloads may include `title`, `body`, `url`, and `icon`. The worker defaults notification clicks to `/`.
+
+## Verification
+
+```bash
+bin/rails db:migrate
+bin/rails runner 'puts [ENV.fetch("VAPID_PUBLIC_KEY").length, ENV.fetch("VAPID_PRIVATE_KEY").length].inspect'
+bin/rails routes | grep push_subscriptions
+```
+
+Use an HTTPS page or localhost. Trigger the opt-in UI, allow notifications, confirm a `PushSubscription` row contains the endpoint and both keys, then send a notification through `PushNotificationService`. Verify it appears while the app is in the background and that clicking it opens the payload URL.

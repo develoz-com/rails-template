@@ -1,0 +1,75 @@
+# Database Backups
+
+## Overview
+
+This feature creates gzipped PostgreSQL backups and removes old backup files according to a retention period. It supports an executable shell script, Rails Rake tasks, and an optional Docker Compose service.
+
+Backups are written under `backups/` by default and match `db_YYYYMMDD_HHMMSS.sql.gz`. The generated `.gitignore` entry keeps that directory out of version control.
+
+## What It Adds
+
+- Executable `bin/db-backup`, which pipes `pg_dump` output through `gzip` and prunes expired files after a successful dump command.
+- `lib/tasks/backup.rake` with `backup:create` and `backup:prune` tasks.
+- `/backups/` in `.gitignore`.
+- With the generator's `--docker` option, a `db-backup` service injected into `docker-compose.yml` once.
+
+The optional Compose service uses `postgres:18`, waits for the `postgres` health check, mounts `./backups` at `/backups`, and runs `bin/db-backup` every 21,600 seconds, or six hours. It isn't added unless `--docker` is selected.
+
+## Configuration
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `DATABASE_URL` | Required outside the optional Compose service | PostgreSQL connection passed to `pg_dump`. |
+| `BACKUP_RETENTION_DAYS` | `7` | Delete matching backups older than this many days. |
+| `BACKUP_DIR` | `./backups` | Output directory for `bin/db-backup`. The Rake tasks always use `Rails.root/backups`. |
+
+Example local configuration:
+
+```bash
+export DATABASE_URL='postgres://postgres:postgres@localhost:5432/<%= app_name %>_development'
+export BACKUP_RETENTION_DAYS=7
+export BACKUP_DIR=./backups
+```
+
+The shell script requires `pg_dump`, `gzip`, and `find`. The Rake task requires `pg_dump`; Ruby's `Zlib::GzipWriter` creates the compressed file.
+
+The optional Compose service supplies a default database URL for the `postgres` service and a seven-day retention value. Its command expects `bin/db-backup` to exist inside the container. The generated `postgres:18` service doesn't mount the application source, so configure an image or bind mount that provides the script before starting that service.
+
+## Usage
+
+Create a backup with the executable script:
+
+```bash
+DATABASE_URL="$DATABASE_URL" bin/db-backup
+```
+
+Create a backup through Rails, which also prunes expired files:
+
+```bash
+DATABASE_URL="$DATABASE_URL" bin/rails backup:create
+```
+
+Run retention pruning without creating a backup:
+
+```bash
+BACKUP_RETENTION_DAYS=14 bin/rails backup:prune
+```
+
+If the feature was generated with `--docker` and the service has been configured to include `bin/db-backup`, start it with:
+
+```bash
+docker compose up -d db-backup
+docker compose logs -f db-backup
+```
+
+## Verification
+
+Create a backup against a safe database, then inspect the gzip archive without restoring it:
+
+```bash
+DATABASE_URL="$DATABASE_URL" bin/db-backup
+gzip -t backups/db_*.sql.gz
+ls -lh backups/db_*.sql.gz
+```
+
+`gzip -t` should exit successfully, and the listing should show a timestamped `.sql.gz` file. Also test retention with disposable backup files before relying on automated pruning. A backup isn't complete operational protection until a restore has been tested in a separate database.

@@ -1,0 +1,86 @@
+# Tooling
+
+## Overview
+
+The tooling generator adds shared environment configuration and a VS Code setup for day-to-day Rails development.
+It also installs `dotenv-rails` so development and test processes can read values from `.env`.
+
+Run it from the Rails application root:
+
+```bash
+rails g develoz:tooling
+```
+
+## What It Adds
+
+- `dotenv-rails` in the `development` and `test` Gemfile groups.
+- `.vscode/settings.json` with Ruby LSP formatting, RuboCop fixes on explicit save actions, final newlines,
+  trailing whitespace cleanup, rulers, and file exclusions.
+- `.vscode/extensions.json` recommending `Shopify.ruby-lsp`, `EditorConfig.EditorConfig`, `GitHub.copilot`, and
+  `ms-vscode.makefile-tools`.
+- `.vscode/tasks.json` with `bundle exec rspec` and `bundle exec rubocop` tasks.
+- `.env.example` with `APP_NAME`, `DATABASE_URL`, and `RAILS_ENV` entries.
+- An empty `.env` when that file doesn't already exist. Existing `.env` content is preserved.
+- A `.env` entry in `.gitignore` when `.gitignore` exists.
+- `config/initializers/constants.rb`, which defines the `Constants` module and reads database, Redis, server,
+  host, caching, Memcachier, and application name settings from the environment.
+
+## Configuration
+
+Copy the values your application needs into `.env`. The generated example starts with:
+
+```dotenv
+APP_NAME=your_app_name
+DATABASE_URL=
+RAILS_ENV=development
+```
+
+`config/initializers/constants.rb` defines `DATABASE_HOST`, `DATABASE_PORT`, `DATABASE_NAME`,
+`TEST_DATABASE_NAME`, `REDIS_URL`, `RAILS_MAX_THREADS`, `SERVER_PORT`, `HOST`, `CACHING_DEV`,
+`MEMCACHIER_SERVERS`, and `APP_NAME`. Each constant has a local default. Add new environment-backed constants at
+the marker near the end of that module.
+
+The default thread count is `(nproc or 2) * 5`: for example `20` on a 4-core machine, or `10` when the Unix
+`nproc` utility isn't available. Review `RAILS_MAX_THREADS` on platforms without `nproc`.
+
+This generator has no feature-specific command-line options.
+
+## Usage
+
+Install the new gem after generation:
+
+```bash
+bundle install
+```
+
+Open the app in VS Code to accept the extension recommendations. Run the generated tasks through
+**Terminal > Run Task**, or use their shell equivalents:
+
+```bash
+bundle exec rspec
+bundle exec rubocop
+```
+
+Read constants anywhere in the Rails process through the generated module:
+
+```ruby
+Constants::APP_NAME
+Constants::DATABASE_HOST
+```
+
+## Verification
+
+Confirm that Rails loads the initializer and the configured application name:
+
+```bash
+bin/rails runner 'puts Constants::APP_NAME'
+```
+
+Check that `.env` is ignored before adding local secrets:
+
+```bash
+git check-ignore .env
+```
+
+Finally, inspect `.vscode/tasks.json` and run both generated VS Code tasks if RSpec and RuboCop are installed in
+the application.

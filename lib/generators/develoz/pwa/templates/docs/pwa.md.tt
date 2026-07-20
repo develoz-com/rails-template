@@ -1,0 +1,52 @@
+# Progressive Web App
+
+## Overview
+
+The PWA feature adds a web app manifest, service worker, offline page, and browser registration module. The service worker caches static assets first, tries the network first for pages and other requests, and falls back to `/offline` for uncached navigation while disconnected.
+
+## What It Adds
+
+- `app/controllers/pwa_controller.rb`, serving the manifest, service worker, and offline page without a layout.
+- `app/views/pwa/manifest.json.erb`, with app name, icons, start URL, standalone display, and theme colors.
+- `app/views/pwa/service-worker.js.erb`, with install, activate, and fetch handlers.
+- `app/views/pwa/offline.html.erb`, with a retry button.
+- `app/javascript/pwa/registration.js`, which registers `/service-worker` after window load and reloads when an update is installed.
+- `GET /manifest`, named `pwa_manifest_path`.
+- `GET /service-worker`, named `pwa_service_worker_path`.
+- `GET /offline`, named `pwa_offline_path`.
+
+The feature adds no gems, database tables, or environment variables.
+
+## Configuration
+
+Add the manifest to the document head in the application layout:
+
+```erb
+<link rel="manifest" href="/manifest">
+<meta name="theme-color" content="#ffffff">
+```
+
+Place the `512x512` image referenced by the manifest at `public/icon.png`, or update both icon entries in `app/views/pwa/manifest.json.erb` to match real assets.
+
+The generator creates the registration module but doesn't pin or import it. With Importmap, add `pin "pwa/registration", to: "pwa/registration.js"` to `config/importmap.rb`, then add `import "pwa/registration"` to `app/javascript/application.js`.
+
+Service workers require HTTPS outside localhost. Change the cache names in `app/views/pwa/service-worker.js.erb` when a deployment must invalidate all previously cached entries.
+
+## Usage
+
+Edit the manifest name, description, icons, colors, `start_url`, and `scope` for the application. Update `APP_SHELL` in the service worker when more URLs must be available immediately after installation.
+
+The worker handles only same-origin `GET` requests. Static assets use the `develoz-static-v1` cache. HTML navigation and other requests prefer the network and use `develoz-pages-v1` as fallback storage.
+
+Push builds on this feature. The Push generator runs the PWA generator automatically when PWA wasn't selected. PWA alone doesn't include push event handlers.
+
+## Verification
+
+```bash
+bin/rails routes | grep -E 'manifest|service-worker|offline'
+curl -i http://localhost:3000/manifest
+curl -i http://localhost:3000/service-worker
+curl -i http://localhost:3000/offline
+```
+
+In browser developer tools, confirm the manifest loads, the service worker controls the page, and `/offline` appears after loading the site once and then navigating without a network connection.

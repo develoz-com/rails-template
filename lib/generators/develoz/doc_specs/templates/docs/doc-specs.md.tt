@@ -1,0 +1,61 @@
+# Documentation Specs
+
+## Overview
+
+The documentation specs generator turns specially formatted system specs into screenshot-backed feature guides. This is separate from the generic `docs/testing.md` guide: `docs/testing.md` explains the project's overall test practices, while this feature generates user-facing Markdown from executable system-spec scenarios.
+
+Run the generator with:
+
+```bash
+rails g develoz:doc_specs
+```
+
+## What It Adds
+
+- Executable `bin/generate-docs`
+- `spec/support/doc_screenshot_helper.rb`
+- `lib/tasks/docs_check.rake`
+- `spec/system/example_doc_spec.rb`
+
+The script finds system specs under `spec/system/**/*_spec.rb` that contain a top-level `# =` documentation heading. It writes guides to `docs/platform-guide`, screenshots to `docs/screenshots`, and a generated table of contents to `docs/platform-guide/README.md`.
+
+The screenshot helper is included in system specs and writes a PNG only when `SCREENSHOTS=true`. The generated example demonstrates `@category`, `@order`, nested documentation headings, and `doc_screenshot`.
+
+## Configuration
+
+Write `# = Title`, `# == Section`, and deeper heading comments in a system spec. Add `# @category Name` and `# @order 100` to control the generated table of contents. Specs without those directives fall under `Other` and sort after numbered guides.
+
+Call `doc_screenshot("folder/name")` after the state you want to document. The helper waits briefly for animation, then saves `docs/screenshots/folder/name.png` when screenshots are enabled.
+
+RSpec must load files under `spec/support` for `doc_screenshot` to be available. The system test stack and browser driver must already be configured.
+
+## Usage
+
+Generate every documented system spec, or pass one or more spec paths:
+
+```bash
+bin/generate-docs
+bin/generate-docs spec/system/example_doc_spec.rb
+```
+
+Normal generation runs each selected spec with `SCREENSHOTS=true`, writes its Markdown guide, and rebuilds the platform guide README. Other modes are available:
+
+```bash
+bin/generate-docs --render-only
+bin/generate-docs --readme-only
+bin/generate-docs --check
+bin/rails docs:check
+```
+
+`--render-only` rebuilds guide bodies from comments and existing screenshots without running specs. `--readme-only` rebuilds only the table of contents. `--check` and `docs:check` compare committed guide bodies with their source specs without running the specs or checking screenshot binaries.
+
+## Verification
+
+Generate the example guide, then check that committed output is current:
+
+```bash
+bin/generate-docs spec/system/example_doc_spec.rb
+bin/rails docs:check
+```
+
+Confirm that a Markdown file appears under `docs/platform-guide`, its entry appears in `docs/platform-guide/README.md`, and any captured PNG appears under `docs/screenshots`. A stale or missing guide causes `--check` to exit with status 1 and list the spec that needs regeneration.

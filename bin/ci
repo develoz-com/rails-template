@@ -25,6 +25,10 @@ puts "=" * 60
 
 run_step("RSpec", "bundle exec rspec")
 run_step("RuboCop", "bundle exec rubocop")
+run_step("Reek", "bundle exec reek lib")
+run_step("Flay", "bundle exec flay --mass 150 lib")
+run_step("Bundler Audit", "bundle exec bundler-audit")
+run_step("Haml Lint", "bundle exec haml-lint")
 
 puts "\n" + "=" * 60
 puts "✓ All CI checks passed"

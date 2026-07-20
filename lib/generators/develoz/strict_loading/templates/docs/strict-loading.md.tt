@@ -1,0 +1,42 @@
+# Strict Loading
+
+## Overview
+
+The strict loading generator enables Active Record strict loading for every model. It uses `:n_plus_one_only` mode so Rails reports lazy association loads that can cause N+1 queries without rejecting every lazy load.
+
+Run it with:
+
+```bash
+rails g develoz:strict_loading
+```
+
+## What It Adds
+
+- `config/initializers/strict_loading.rb`
+- `Rails.application.config.active_record.strict_loading_by_default = true`
+- `Rails.application.config.active_record.strict_loading_mode = :n_plus_one_only`
+- Environment-specific handling through `ActiveRecord.action_on_strict_loading_violation`
+
+No gems, routes, models, or database migrations are added.
+
+## Configuration
+
+The initializer raises strict loading violations in the test environment. In every other environment, including development and production, it logs violations instead.
+
+Edit `config/initializers/strict_loading.rb` if the application needs a different mode or response. Restart the application after changing the initializer.
+
+## Usage
+
+Exercise code that reads associations as usual. A test that triggers an N+1 lazy load will raise, while the same violation outside the test environment will appear in the Rails log.
+
+Fix violations by loading the required associations before iteration, for example with `includes`, `preload`, or `eager_load`, based on the query the application needs.
+
+## Verification
+
+Run the relevant model, request, or system specs:
+
+```bash
+bundle exec rspec spec/models spec/requests spec/system
+```
+
+In development, exercise an association-heavy page and inspect `log/development.log` for strict loading violations. Confirm that expected pages still load and that any reported association is explicitly preloaded.

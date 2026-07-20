@@ -2,104 +2,150 @@
 # Always-core generators (included regardless of flags)
 tooling:
   description: "Tooling setup (linting, formatting, CI)"
+  documentation_slug: "tooling"
+  documentation_title: "Tooling"
   always: true
 
 testing:
   description: "Testing framework and helpers"
+  documentation_slug: "testing-feature"
+  documentation_title: "Testing"
   always: true
 
 solid:
   description: "Solid Stack integration (Stimulus, Turbo, Hotwire)"
+  documentation_slug: "solid"
+  documentation_title: "Solid Stack"
   always: true
 
 ci:
   description: "CI/CD pipeline configuration"
+  documentation_slug: "ci"
+  documentation_title: "Continuous Integration"
   always: true
 
 database:
   description: "Database configuration and migrations"
+  documentation_slug: "database"
+  documentation_title: "Database"
   always: true
 
 concerns:
   description: "Shared concerns and mixins"
+  documentation_slug: "concerns"
+  documentation_title: "Concerns"
   always: true
 
 strict_loading:
   description: "Strict loading configuration"
+  documentation_slug: "strict-loading"
+  documentation_title: "Strict Loading"
   always: true
 
 maintenance:
   description: "Maintenance tasks and utilities"
+  documentation_slug: "maintenance"
+  documentation_title: "Maintenance"
   always: true
 
 frontend_core:
   description: "Core frontend setup (Tailwind, Importmap, Pagy)"
+  documentation_slug: "frontend-core"
+  documentation_title: "Frontend Core"
   always: true
 
 docs_render:
   description: "Documentation rendering setup"
+  documentation_slug: "docs-render"
+  documentation_title: "Documentation Rendering"
   always: true
 
 doc_specs:
   description: "Documentation specs"
+  documentation_slug: "doc-specs"
+  documentation_title: "Documentation Specs"
   always: true
 
 agents_docs:
   description: "AGENTS.md documentation"
+  documentation_slug: "agents-docs"
+  documentation_title: "Agent Documentation"
   always: true
 
 versioning:
   description: "App versioning scheme"
+  documentation_slug: "versioning"
+  documentation_title: "Versioning"
   always: true
 
 # Opt-in generators (included only when flags are true)
 api:
   description: "REST API setup (Blueprinter, RSWAG)"
+  documentation_slug: "api"
+  documentation_title: "API"
   requires:
     - api
 
 auth:
   description: "Authentication setup (Devise, JWT)"
+  documentation_slug: "auth"
+  documentation_title: "Authentication"
   requires:
     - auth
 
 ui:
   description: "UI component library"
+  documentation_slug: "ui"
+  documentation_title: "UI Components"
   requires:
     - ui
 
 admin:
   description: "Admin panel setup"
+  documentation_slug: "admin"
+  documentation_title: "Admin"
   requires:
     - admin
 
 pwa:
   description: "Progressive Web App setup"
+  documentation_slug: "pwa"
+  documentation_title: "Progressive Web App"
   requires:
     - pwa
 
 push:
   description: "Push notifications setup"
+  documentation_slug: "push"
+  documentation_title: "Push Notifications"
   requires:
     - pwa
     - push
 
 active_resource:
   description: "ActiveResource integration"
+  documentation_slug: "active-resource"
+  documentation_title: "Active Resource"
   requires:
     - active_resource
 
 docker:
   description: "Docker and Docker Compose setup"
+  documentation_slug: "docker"
+  documentation_title: "Docker Development"
   requires:
     - docker
 
 kamal:
   description: "Kamal deployment configuration"
+  documentation_slug: "kamal"
+  documentation_title: "Kamal Deployment"
   requires:
     - kamal
 
 db_backup:
   description: "Database backup utilities"
+  documentation_slug: "db-backup"
+  documentation_title: "Database Backups"
   requires:
     - db_backup

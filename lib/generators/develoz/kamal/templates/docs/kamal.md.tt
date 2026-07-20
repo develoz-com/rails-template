@@ -1,0 +1,77 @@
+# Kamal Deployment
+
+## Overview
+
+This feature prepares the application for production deployment with Kamal 2. It adds a production image, a deploy configuration, registry and application secret references, and a PostgreSQL accessory.
+
+Kamal is distinct from the Docker development feature. Kamal builds `Dockerfile.prod` and deploys to configured servers. The Docker feature builds `Dockerfile.dev` and runs the local development stack with Docker Compose.
+
+## What It Adds
+
+- The `kamal` gem in the `development` group with automatic requiring disabled.
+- `config/deploy.yml` with the service, image, amd64 builder, servers, registry, Rails secrets, and PostgreSQL accessory.
+- `Dockerfile.prod`, a multi-stage production build that precompiles Bootsnap and assets, runs as a non-root user, exposes port 80, and starts Rails through Thruster.
+- `.kamal/secrets` with environment variable references instead of literal credentials.
+- `config/accessories/postgres.yml`, a standalone copy of the PostgreSQL accessory settings.
+- `.kamal/secrets` in `.gitignore`.
+
+## Configuration
+
+These environment variables affect files when the feature generator runs:
+
+| Variable | Default | Generated setting |
+| --- | --- | --- |
+| `KAMAL_APP_NAME` | Rails application name | Kamal service name and default image name. |
+| `KAMAL_IMAGE` | `KAMAL_APP_NAME` | Container image name. |
+| `KAMAL_REGISTRY` | `your-registry-user` placeholder | Registry username. |
+| `KAMAL_SERVERS` | `<%= kamal_app_name %>.example.com` placeholder | Comma-separated deployment hosts. |
+
+Set them before generating if you want their values rendered into `config/deploy.yml`. Otherwise, replace every `example.com` host and placeholder registry value in the generated files.
+
+Kamal resolves these secrets from the shell or CI environment at deployment time:
+
+```bash
+export KAMAL_REGISTRY_PASSWORD='replace-me'
+export RAILS_MASTER_KEY="$(cat config/master.key)"
+export DATABASE_URL='postgres://user:password@database-host:5432/<%= kamal_app_name %>_production'
+export POSTGRES_PASSWORD='replace-me'
+```
+
+When generated with push notifications enabled, `VAPID_PUBLIC_KEY` and `VAPID_PRIVATE_KEY` are also added to `config/deploy.yml` and `.kamal/secrets`.
+
+The PostgreSQL accessory uses `postgres:18`, binds its database port to `127.0.0.1:5432` on the accessory host, and stores data in `postgres-data`. Keep `DATABASE_URL` and `POSTGRES_PASSWORD` consistent with that database. Review both the inline accessory in `config/deploy.yml` and `config/accessories/postgres.yml` after changing hosts.
+
+## Usage
+
+Install dependencies and inspect the generated configuration:
+
+```bash
+bundle install
+bundle exec kamal config
+```
+
+Build the production image locally before the first deployment:
+
+```bash
+docker build -t <%= kamal_app_name %> -f Dockerfile.prod .
+```
+
+After server addresses, registry settings, and secrets are ready, deploy with:
+
+```bash
+bundle exec kamal setup
+bundle exec kamal deploy
+```
+
+Use `setup` for the first deployment. Later releases can use `deploy` directly.
+
+## Verification
+
+Check the production image and Kamal configuration without deploying:
+
+```bash
+docker build -t <%= kamal_app_name %>:verify -f Dockerfile.prod .
+bundle exec kamal config
+```
+
+Confirm that the rendered service, image, server hosts, and registry are correct. Make sure `.kamal/secrets` contains only `$VARIABLE` references and that all referenced variables exist in the deployment shell or CI environment.

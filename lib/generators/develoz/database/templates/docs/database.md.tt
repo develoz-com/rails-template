@@ -1,0 +1,83 @@
+# Database
+
+## Overview
+
+The database generator configures the application for PostgreSQL 18, including separate primary, queue, cache,
+and cable databases. It also adds PostgreSQL search support and a migration for the `pg_trgm` and `unaccent`
+extensions.
+
+Run it from the Rails application root:
+
+```bash
+rails g develoz:database
+```
+
+## What It Adds
+
+- `pg` and `pg_search` in the Gemfile.
+- `config/database.yml` using the PostgreSQL adapter and named `primary`, `queue`, `cache`, and `cable`
+  connections in development, test, and production.
+- Test database names with a `TEST_ENV_NUMBER` suffix for parallel workers.
+- A production primary connection that reads `DATABASE_URL` and named production databases for queue, cache, and cable.
+- `config/initializers/pg_search.rb`, reserved for global PgSearch configuration and pointing to the searchable concern.
+- A timestamped `db/migrate/*_create_pg_extensions.rb` migration that creates `pg_trgm` and `unaccent` on `up`
+  and removes them on `down`.
+- `postgres 18` in `.tool-versions`. The file is created when absent, or the entry is added once to an existing file.
+
+## Configuration
+
+The shared connection settings read these environment variables at Rails runtime:
+
+- `DATABASE_POOL`, defaulting to `10`.
+- `DATABASE_HOST`, defaulting to `localhost`.
+- `DATABASE_PORT`, defaulting to `5432`.
+- `DATABASE_USER`, defaulting to `postgres`.
+- `DATABASE_PASSWORD`, defaulting to an empty string.
+- `DATABASE_URL` for the production primary connection.
+
+Database names are based on the application directory name. Review every generated name before creating
+databases, especially when adopting the generator in an existing application.
+
+PostgreSQL 18 or newer is required by the generated configuration. The migration also needs a PostgreSQL role
+allowed to create the `pg_trgm` and `unaccent` extensions. A version manager reads `.tool-versions`; the generator
+doesn't install PostgreSQL itself.
+
+This generator has no feature-specific command-line options.
+
+## Usage
+
+Install the gems, create the configured databases, and apply the extension migration:
+
+```bash
+bundle install
+bin/rails db:create
+bin/rails db:migrate
+```
+
+Define search on a model with the `SearchableConcern` installed by the concerns generator:
+
+```ruby
+class Article < ApplicationRecord
+  searchable_by :title, :body
+end
+```
+
+Then query it with `Article.search("rails")` or the generated `search_by_text` PgSearch scope.
+
+## Verification
+
+Confirm the PostgreSQL server version and active adapter:
+
+```bash
+psql --version
+bin/rails runner 'puts ActiveRecord::Base.connection.adapter_name'
+```
+
+After migration, verify both search extensions:
+
+```bash
+bin/rails runner 'p ActiveRecord::Base.connection.extensions & %w[pg_trgm unaccent]'
+```
+
+For applications using the Solid Stack, also confirm that the `queue`, `cache`, and `cable` databases were created
+and are reachable with the deployment credentials.

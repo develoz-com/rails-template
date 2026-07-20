@@ -1,0 +1,56 @@
+# Authentication
+
+## Overview
+
+The authentication feature adds password-based users, signed-cookie sessions, request-scoped access through `Current.user`, and password reset email flows. It uses Rails authentication primitives and `bcrypt`; it doesn't install Devise or JWT support.
+
+## What It Adds
+
+- Gem: `bcrypt`.
+- `app/models/user.rb`, with `has_secure_password`, normalized email addresses, and email validation.
+- `app/models/current.rb`, with the request-scoped `Current.user` attribute.
+- `app/controllers/concerns/authentication.rb`, which resumes signed-cookie sessions and protects controller actions.
+- `app/controllers/sessions_controller.rb` and `app/controllers/passwords_controller.rb`.
+- `app/mailers/passwords_mailer.rb` and its reset email view.
+- Sign-in and password edit views under `app/views/sessions` and `app/views/passwords`.
+- A `users` migration with unique `email` and required `password_digest` columns.
+- Request specs in `spec/requests/sessions_spec.rb` and `spec/requests/passwords_spec.rb`.
+- Session routes at `GET /session/new`, `POST /session`, and `DELETE /session`.
+- Password routes for `new`, `create`, `edit`, and `update`, using the reset token as `:token`.
+
+## Configuration
+
+Include the generated concern in `ApplicationController`:
+
+```ruby
+class ApplicationController < ActionController::Base
+  include Authentication
+end
+```
+
+This makes authentication required by default. Use `allow_authentication_as` in controllers that must remain public. The session cookie is signed, permanent, HTTP-only, and uses `SameSite=Lax`.
+
+Configure Action Mailer delivery and `default_url_options` for each environment so reset links use the correct host. No authentication-specific environment variables are generated. Add `app/views/passwords/new.html.erb` if the application doesn't already provide the forgot-password form rendered by `PasswordsController#new`.
+
+## Usage
+
+Run the migration, then create users with an email and password:
+
+```bash
+bin/rails db:migrate
+bin/rails runner 'User.create!(email: "owner@example.com", password: "change-me-now")'
+```
+
+Use `Current.user` for the authenticated user. Successful sign-in returns users to the URL that first required authentication, or to `root_url`. Password reset requests always return the same notice, whether or not the email exists, and enqueue `PasswordsMailer.reset` for matching users.
+
+The generated controllers rate-limit sign-in and password reset requests to 10 attempts per three minutes. Add application-specific authorization separately; authentication alone doesn't decide which records or admin pages a user may access.
+
+## Verification
+
+```bash
+bin/rails db:migrate
+bin/rails routes | grep -E 'session|password'
+bundle exec rspec spec/requests/sessions_spec.rb spec/requests/passwords_spec.rb
+```
+
+Visit `/session/new`, sign in with a valid user, confirm a protected page sees `Current.user`, sign out, and request a password reset while inspecting the configured mail delivery.

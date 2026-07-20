@@ -1,0 +1,100 @@
+# Testing
+
+## Overview
+
+The testing generator installs an RSpec stack for Rails model, request, and browser tests. It configures
+FactoryBot, headless Chrome through Capybara and Selenium, parallel test runs, and a strict SimpleCov coverage
+gate.
+
+Run it from the Rails application root:
+
+```bash
+rails g develoz:testing
+```
+
+## What It Adds
+
+- `rspec-rails` in the `development` and `test` Gemfile groups.
+- `capybara`, `selenium-webdriver`, `parallel_tests`, and `factory_bot_rails` in the `test` group.
+- `simplecov` and `simplecov-lcov` in the `test` group with automatic requiring disabled in the Gemfile.
+- `.rspec` and `.rspec_parallel`, both configured with `--require spec_helper` and documentation output.
+- `spec/spec_helper.rb` with HTML and LCOV coverage formatters, line and branch coverage, parallel result merging,
+  and a 100 percent minimum for both line and branch coverage.
+- `spec/rails_helper.rb` with Rails and RSpec loading, transactional fixtures, spec type inference, Rails
+  backtrace filtering, `spec/support/**/*.rb` loading, FactoryBot definitions, and test schema maintenance.
+- A `:headless_chrome` Capybara driver using Selenium with `--headless=new`, `--no-sandbox`, and `--disable-gpu`.
+  It becomes the JavaScript driver.
+
+Coverage output is written to `public/coverage`. Files under `spec`, `config`, `db`, `bin`, and shell scripts are
+excluded from the coverage calculation.
+
+## Configuration
+
+The generated coverage threshold is intentionally strict:
+
+```ruby
+minimum_coverage line: 100, branch: 100
+```
+
+Change that line in `spec/spec_helper.rb` only when the application has a different documented coverage policy.
+Add shared test setup under `spec/support`; the Rails helper loads those files in sorted order.
+
+FactoryBot reads definitions from `spec/factories`. Browser-driven specs require a Chrome or Chromium
+installation that Selenium can start, or a `SELENIUM_URL` pointing at a `selenium/standalone-chromium`
+container (Docker Compose ships one).
+
+Parallel workers are distinguished by `TEST_ENV_NUMBER`. The database generator uses the same variable for test
+database names. This generator has no feature-specific command-line options.
+
+## Usage
+
+Install the gems, then prepare the test schema:
+
+```bash
+bundle install
+bin/rails db:test:prepare
+```
+
+Run the full suite in one process or with `parallel_tests`:
+
+```bash
+bundle exec rspec
+bundle exec parallel_rspec spec
+```
+
+Run a focused file or example by passing its path and line number:
+
+```bash
+bundle exec rspec spec/models/user_spec.rb
+bundle exec rspec spec/models/user_spec.rb:24
+```
+
+System specs default to the fast in-process `:rack_test` driver. Tag an example
+with `:js` (or set `SCREENSHOTS=true`, which `bin/generate-docs` does) to drive a
+real headless Chromium session through the `:headless_chrome` driver instead. The
+driver adds `--no-sandbox`/`--disable-gpu`/`--disable-dev-shm-usage` so it works
+as root, inside a container, and on CI, unlike rspec-rails' default
+`:selenium_chrome_headless`.
+
+When `SELENIUM_URL` is set the browser runs in a sibling `selenium/standalone-chromium`
+container: the driver connects with `browser: :remote`, and Capybara serves the
+test app on `0.0.0.0` at a `TEST_ENV_NUMBER`-offset port with
+`app_host` set to this container's hostname so the remote browser can reach it.
+Leave `SELENIUM_URL` unset to launch a local Chromium.
+
+## Verification
+
+Run the suite and confirm that the coverage gate passes:
+
+```bash
+bundle exec rspec
+```
+
+Open `public/coverage/index.html` to inspect the HTML report. Then exercise parallel configuration:
+
+```bash
+bundle exec parallel_rspec spec
+```
+
+If browser specs fail before reaching the application, verify that Chrome or Chromium is installed and available
+to `selenium-webdriver`.

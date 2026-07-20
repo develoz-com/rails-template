@@ -1,0 +1,56 @@
+# Documentation Rendering
+
+## Overview
+
+The documentation rendering generator adds an in-application Markdown viewer for files in the repository root and under `docs/`. It renders Markdown with Redcarpet, highlights fenced code with Rouge, supports Obsidian-style links and callouts, and prepares Mermaid diagrams for browser rendering.
+
+Run it with:
+
+```bash
+rails g develoz:docs_render
+bundle install
+```
+
+## What It Adds
+
+- The `redcarpet` and `rouge` gems
+- `app/controllers/docs_controller.rb`
+- `app/models/document.rb`
+- `app/views/docs/show.html.erb`
+- `app/javascript/docs.js`
+- `app/assets/stylesheets/documentation.scss`
+- `config/initializers/redcarpet_rouge.rb`
+- `get "docs(/*id)" => "docs#show"` in `config/routes.rb`
+
+`Document` is an Active Model object backed by Markdown files, not a database table. It finds root-level Markdown files and files below `docs/`, treats `README.md` and `00 - Index.md` as folder indexes, and raises `Document::RecordNotFound` when no match exists.
+
+The renderer enables fenced code blocks, tables, autolinks, strikethrough, hard wrapping, heading IDs, sanitized HTML, wikilinks, callouts, syntax highlighting, and Mermaid code blocks. The view includes `docs.js`, while the stylesheet supplies documentation, code, callout, table, and Mermaid styles.
+
+## Configuration
+
+Mermaid is imported by `app/javascript/docs.js`, but this generator does not add its Importmap pin. Add the pin shown in `config/initializers/redcarpet_rouge.rb` to `config/importmap.rb`:
+
+```ruby
+pin "mermaid", to: "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs"
+```
+
+Ensure `app/assets/stylesheets/documentation.scss` is included by the application's stylesheet build or layout. The generated view adds the documentation JavaScript through `content_for :head`, so the application layout must render that content block.
+
+The `/docs` route is public unless the application adds authentication or authorization around `DocsController` or the route.
+
+## Usage
+
+Visit `/docs` to render `README.md`. A path such as `/docs/platform-guide/README` resolves `docs/platform-guide/README.md`. A folder path can resolve that folder's `README.md` or `00 - Index.md`.
+
+Use normal fenced code blocks for Rouge highlighting. Use a `mermaid` fence for a diagram. Wikilinks such as `[[Note]]`, `[[Note#Heading]]`, and `[[Note|Label]]` become links under `/docs`. Blockquotes beginning with `[!NOTE]`, `[!TIP]`, `[!IMPORTANT]`, `[!WARNING]`, or `[!CAUTION]` become styled callouts.
+
+## Verification
+
+Confirm the route and boot the application:
+
+```bash
+bin/rails routes | grep docs
+bin/rails server
+```
+
+Open `/docs` and verify that `README.md` renders. Add a temporary Markdown page containing a fenced code block, wikilink, callout, and Mermaid fence, then check its `/docs/...` URL. Confirm highlighted code, resolved links, callout styling, and a rendered diagram in the browser console without JavaScript errors.

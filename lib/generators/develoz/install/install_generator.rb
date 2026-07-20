@@ -19,9 +19,11 @@ module Develoz
 
       def install
         develoz_options = build_options
-        Develoz::Manifest.for(develoz_options).each do |entry|
+        entries = Develoz::Manifest.for(develoz_options)
+        invoked_entries = entries.select do |entry|
           invoke_generator(entry.name, develoz_options.to_h)
         end
+        FeatureDocumentation.reconcile(destination_root:, entries: invoked_entries, mode: :authoritative)
       end
 
       private
@@ -38,13 +40,17 @@ module Develoz
         require "generators/develoz/#{name}/#{name}_generator"
         klass = Develoz::Generators.const_get("#{name.camelize}Generator")
         gen = klass.new([], generator_options, destination_root: destination_root)
-        klass.public_instance_methods(false).each { |method| gen.public_send(method) }
+        gen.defer_feature_documentation!
+        gen.invoke_all
+        true
       rescue LoadError
         say "generator develoz:#{name} not yet available", :yellow
+        false
       rescue NameError => e
         raise unless e.name.to_s == "#{name.camelize}Generator"
 
         say "generator develoz:#{name} not yet available", :yellow
+        false
       end
     end
   end

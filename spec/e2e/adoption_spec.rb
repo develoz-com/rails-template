@@ -4,23 +4,14 @@ require "spec_helper"
 require "digest/sha2"
 require "fileutils"
 require "tmpdir"
-require "generators/develoz/tooling/tooling_generator"
-require "generators/develoz/testing/testing_generator"
-require "generators/develoz/solid/solid_generator"
-require "generators/develoz/ci/ci_generator"
-require "generators/develoz/database/database_generator"
-require "generators/develoz/concerns/concerns_generator"
-require "generators/develoz/strict_loading/strict_loading_generator"
-require "generators/develoz/maintenance/maintenance_generator"
-require "generators/develoz/frontend_core/frontend_core_generator"
-require "generators/develoz/docs_render/docs_render_generator"
-require "generators/develoz/agents_docs/agents_docs_generator"
+require "generators/develoz/install/install_generator"
 
 RSpec.describe "core generator adoption", :e2e do # rubocop:disable RSpec/DescribeClass
   let(:destination_root) { Dir.mktmpdir("develoz-existing-app") }
 
   before do
     FileUtils.cp_r("#{fixture_root}/.", destination_root)
+    File.binwrite(File.join(destination_root, "README.md"), original_readme)
     run_generators
   end
 
@@ -30,20 +21,8 @@ RSpec.describe "core generator adoption", :e2e do # rubocop:disable RSpec/Descri
     File.expand_path("../fixtures/existing_app", __dir__)
   end
 
-  def generator_classes
-    [
-      Develoz::Generators::ToolingGenerator,
-      Develoz::Generators::TestingGenerator,
-      Develoz::Generators::SolidGenerator,
-      Develoz::Generators::CiGenerator,
-      Develoz::Generators::DatabaseGenerator,
-      Develoz::Generators::ConcernsGenerator,
-      Develoz::Generators::StrictLoadingGenerator,
-      Develoz::Generators::MaintenanceGenerator,
-      Develoz::Generators::FrontendCoreGenerator,
-      Develoz::Generators::DocsRenderGenerator,
-      Develoz::Generators::AgentsDocsGenerator
-    ]
+  def original_readme
+    "# Existing Rails Application\r\n\r\nKeep this adoption guidance byte-for-byte."
   end
 
   def generated_files
@@ -63,10 +42,23 @@ RSpec.describe "core generator adoption", :e2e do # rubocop:disable RSpec/Descri
   end
 
   def run_generators
-    generator_classes.each do |generator_class|
-      generator = generator_class.new([], {}, destination_root: destination_root)
-      generator_class.public_instance_methods(false).each { |method| generator.public_send(method) }
-    end
+    Develoz::Generators::InstallGenerator.new([], {}, destination_root: destination_root).invoke_all
+  end
+
+  def expected_entries
+    Develoz::Manifest.for(Develoz::Options.new)
+  end
+
+  def expected_documentation_paths
+    expected_entries.map { |entry| "docs/#{entry.documentation_slug}.md" }
+  end
+
+  def managed_documentation_paths(path)
+    content = generated_content(path)
+    block = content.match(
+      /#{Regexp.escape(Develoz::Generators::FeatureDocumentation::BEGIN_MARKER)}.*?#{Regexp.escape(Develoz::Generators::FeatureDocumentation::END_MARKER)}/mo
+    ).to_s
+    block.scan(%r{\(docs/([^)]+\.md)\)}).flatten.map { |target| "docs/#{target}" }
   end
 
   def generated_content(path)
@@ -109,6 +101,24 @@ RSpec.describe "core generator adoption", :e2e do # rubocop:disable RSpec/Descri
       expect(generated_files.select { |path| File.file?(File.join(destination_root, path)) }).to eq(generated_files)
       expect(generated_content(".gitignore")).to include(".env")
       expect(generated_content(".tool-versions")).to include("postgres 18")
+    end
+  end
+
+  it "creates exactly the 13 core feature guides and links in manifest order" do
+    aggregate_failures do
+      expect(expected_entries.size).to eq(13)
+      expect(managed_documentation_paths("README.md")).to eq(expected_documentation_paths)
+      expect(managed_documentation_paths("AGENTS.md")).to eq(expected_documentation_paths)
+      expect(expected_documentation_paths).to all(satisfy { |path| File.file?(File.join(destination_root, path)) })
+    end
+  end
+
+  it "retains the existing README and generates the full AGENTS template outside managed blocks" do
+    aggregate_failures do
+      expect(generated_content("README.md")).to start_with(original_readme)
+      expect(generated_content("AGENTS.md")).to include("Development Environment", "Quality Expectations")
+      expect(generated_content("AGENTS.md").index("Quality Expectations"))
+        .to be < generated_content("AGENTS.md").index("## Feature Documentation")
     end
   end
 

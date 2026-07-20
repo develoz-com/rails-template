@@ -1,0 +1,44 @@
+# Admin
+
+## Overview
+
+The Admin feature adds a small namespaced dashboard with its own layout. It is a starting point for application-specific administration, not a resource framework or an authorization system.
+
+## What It Adds
+
+- `app/controllers/admin/base_controller.rb`, inheriting from `ApplicationController` and selecting the `admin` layout.
+- `app/controllers/admin/dashboard_controller.rb`, with an `index` action.
+- `app/views/layouts/admin.html.erb`, with navigation, flash messages, and standalone inline CSS.
+- `app/views/admin/dashboard/index.html.erb`, with the initial dashboard content.
+- An `admin` namespace whose root is `Admin::DashboardController#index`.
+
+The route is `GET /admin`, exposed through `admin_root_path`. No gems, migrations, or environment variables are added.
+
+## Configuration
+
+Protect `Admin::BaseController` before adding sensitive pages. If the Auth feature is installed and `ApplicationController` includes `Authentication`, admin controllers require sign-in through inheritance. Add an authorization check in `Admin::BaseController` to restrict access to actual administrators.
+
+The Admin feature has no hard dependency on the UI feature. Selecting both `--admin` and `--ui` installs both features, but the generated Admin layout still uses its own CSS and doesn't call `develoz_ui` helpers or register library controllers.
+
+To share the component library, initialize it with `bin/setup_develoz_ui`, then replace the generated layout and dashboard markup with components documented in `vendor/develoz-ui`. Keep the `admin_root_path` navigation target unless the route changes.
+
+## Usage
+
+Put admin controllers under `app/controllers/admin` and inherit from `Admin::BaseController`. Add normal REST resources inside the existing namespace:
+
+```ruby
+namespace :admin do
+  root "dashboard#index"
+  resources :users
+end
+```
+
+Add links to `app/views/layouts/admin.html.erb` and keep business rules in models or focused services. Controllers should coordinate authorization, parameters, redirects, and rendering.
+
+## Verification
+
+```bash
+bin/rails routes | grep admin
+```
+
+Start the application and visit `/admin`. Confirm the dashboard uses the Admin layout, flash messages render correctly, and an unauthorized user can't enter after the application's authorization check is added. If UI components were integrated, also confirm the submodule is initialized and the page has no missing JavaScript modules.

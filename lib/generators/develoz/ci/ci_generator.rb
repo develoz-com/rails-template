@@ -10,11 +10,19 @@ module Develoz
       end
 
       def add_ci_gems
-        add_gem "rubocop-rails-omakase", group: %i[development test]
-        add_gem "reek", group: %i[development test]
-        add_gem "flay", group: %i[development test]
-        add_gem "brakeman", group: %i[development test]
-        add_gem "bundler-audit", group: %i[development test]
+        add_gem "rubocop", require: false, group: %i[development test]
+        add_gem "rubocop-capybara", require: false, group: %i[development test]
+        add_gem "rubocop-factory_bot", require: false, group: %i[development test]
+        add_gem "rubocop-migration", require: false, group: %i[development test]
+        add_gem "rubocop-performance", require: false, group: %i[development test]
+        add_gem "rubocop-rails", require: false, group: %i[development test]
+        add_gem "rubocop-rspec", require: false, group: %i[development test]
+        add_gem "rubocop-rspec_rails", require: false, group: %i[development test]
+        add_gem "rubocop-rubycw", require: false, group: %i[development test]
+        add_gem "reek", require: false, group: %i[development test]
+        add_gem "flay", require: false, group: %i[development test]
+        add_gem "brakeman", require: false, group: %i[development test]
+        add_gem "bundler-audit", require: false, group: %i[development test]
         add_gem "haml_lint", require: false, group: %i[development test]
       end
 
@@ -60,6 +68,19 @@ module Develoz
 
       def create_ci_workflow
         template ".github/workflows/ci.yml.tt", ".github/workflows/ci.yml"
+      end
+
+      def configure_rspec_type_inference
+        helper_path = File.join(destination_root, "spec/rails_helper.rb")
+        if File.exist?(helper_path)
+          inject_once(
+            into: "spec/rails_helper.rb",
+            content: "  config.infer_spec_type_from_file_location!",
+            after: "RSpec.configure do |config|\n"
+          )
+        else
+          false
+        end
       end
     end
   end

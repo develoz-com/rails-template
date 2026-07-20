@@ -47,8 +47,7 @@ Both migrations target Active Record 8.0 and PostgreSQL. They use JSONB, concurr
 and `uuid-ossp` extensions. The database role must be allowed to enable those extensions. `SearchableConcern` also
 requires the `pg_search` gem from the database generator.
 
-Update `Configuration::CONFIGURABLES` and `Configuration::FORM_CONFIGURABLES` for the models in the application.
-The generated defaults name `User`, `Client`, `Platform`, and `ClientPlatform`.
+Update `Configuration::CONFIGURABLES` for the models in the application. The generated default names only `User`.
 
 The generated specs require `spec/rails_helper.rb` and create temporary PostgreSQL-style tables, including JSONB
 columns. This generator has no feature-specific command-line options.

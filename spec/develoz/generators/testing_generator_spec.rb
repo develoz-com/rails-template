@@ -126,6 +126,14 @@ RSpec.describe Develoz::Generators::TestingGenerator do
     end
   end
 
+  it "generates spec_helper that forces the test environment" do
+    with_tmp_dir do |tmp|
+      run_gen(tmp)
+      spec_helper = File.read(File.join(tmp, "spec/spec_helper.rb"))
+      expect(spec_helper).to include('ENV["RAILS_ENV"] = "test"')
+    end
+  end
+
   it "generates spec_helper with SimpleCov configuration" do
     with_tmp_dir do |tmp|
       run_gen(tmp)

@@ -72,6 +72,22 @@ RSpec.describe Develoz::Generators::ConcernsGenerator do
     end
   end
 
+  it "seeds CONFIGURABLES with only models the template ships" do
+    with_tmp_dir do |tmp|
+      run_gen(tmp)
+      configuration = File.read(File.join(tmp, "app/models/configuration.rb"))
+      expect(configuration).to include("CONFIGURABLES = %w[User].freeze")
+    end
+  end
+
+  it "omits the unused FORM_CONFIGURABLES constant" do
+    with_tmp_dir do |tmp|
+      run_gen(tmp)
+      configuration = File.read(File.join(tmp, "app/models/configuration.rb"))
+      expect(configuration).not_to include("FORM_CONFIGURABLES")
+    end
+  end
+
   it "injects concerns into ApplicationRecord" do
     with_tmp_dir do |tmp|
       run_gen(tmp)

@@ -21,8 +21,7 @@
 #  index_configurations_on_key                                    (key)
 #
 class Configuration < ApplicationRecord
-  CONFIGURABLES = %w[ User Client Platform ClientPlatform ].freeze
-  FORM_CONFIGURABLES = %w[ User Client Platform ].freeze
+  CONFIGURABLES = %w[User].freeze
 
   attribute :yaml_value, :string
 
